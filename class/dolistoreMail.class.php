@@ -19,13 +19,13 @@ require_once DOL_DOCUMENT_ROOT.'/societe/class/societe.class.php';
 require_once DOL_DOCUMENT_ROOT.'/categories/class/categorie.class.php';
 
 /**
- * 
+ *
  * Class to describe dolistore Email
  *
  */
 class dolistoreMail
 {
-	
+
 	public $invoice_company= '';
 	public $invoice_firstname= '';
 	public $invoice_lastname= '';
@@ -40,24 +40,24 @@ class dolistoreMail
 	public $order_name= '';
 	public $currency= '';
 	public $iso_code= '';
-	
+
 	/**
-	 * 
+	 *
 	 * @var array
 	 */
 	public $items = array();
-	
-	
-	
-	
+
+
+
+
 	function __construct()
 	{
-		
+
 	}
-	
+
 	/**
 	 * Set data for email object
-	 * 
+	 *
 	 * @param array $datasOrderArray Array filled with \dolistoreMailExtract::extractOrderDatas()
 	 * @return number
 	 */
@@ -67,14 +67,14 @@ class dolistoreMail
 			return 0;
 		}
 		foreach ($datasOrderArray as $key => $value) {
-			$this->${key} = $value;
+			$this->{$key} = $value;
 		}
 		return count($datasOrderArray);
-		
+
 	}
 	/**
 	 * Set data for object lines
-	 * 
+	 *
 	 * @param array $extractProductDatas Array filled with \dolistoreMailExtract::extractProductsDatas()
 	 * @return number
 	 */
@@ -83,23 +83,23 @@ class dolistoreMail
 		if (empty($extractProductDatas)) {
 			return 0;
 		}
-		
+
 		$this->items = array();
 		$i = 0;
 		foreach ($extractProductDatas as $prod) {
-			
+
 			$line = new dolistoreMailLine();
 			$line->item_name = $prod['item_name'];
 			$line->item_reference = $prod['item_reference'];
 			$line->item_price = $prod['item_price'];
 			$line->item_quantity = $prod['item_quantity'];
 			$line->item_price_total = $prod['item_price_total'];
-			
+
 			$this->items[$i] = $line;
 			++$i;
 		}
 		return count($this->items);
 	}
-	
-	
+
+
 }

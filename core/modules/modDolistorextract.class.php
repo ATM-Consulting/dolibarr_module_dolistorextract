@@ -47,7 +47,7 @@ class modDolistorextract extends DolibarrModules
 
 		// Id for module (must be unique).
 		// Use here a free id (See in Home -> System information -> Dolibarr for list of used modules id).
-		$this->numero = 104976;	
+		$this->numero = 104976;
 		// Key text used to identify module (for permissions, menus, etc...)
 		$this->rights_class = 'dolistorextract';
 
@@ -66,9 +66,9 @@ class modDolistorextract extends DolibarrModules
 		$this->descriptionlong = "A very long description. Can be a full HTML content";
 		$this->editor_name = 'Editor name';
 		$this->editor_url = 'https://www.dolibarr.org';
-		
+
 		// Possible values for version are: 'development', 'experimental', 'dolibarr', 'dolibarr_deprecated' or a version string like 'x.y.z'
-		$this->version = '1.2.6';
+		$this->version = '1.2.7';
 		// Key used in llx_const table to save module status enabled/disabled (where MYMODULE is value of property name of module in uppercase)
 		$this->const_name = 'MAIN_MODULE_'.strtoupper($this->name);
 		// Name of image file used for this module.
@@ -153,7 +153,7 @@ class modDolistorextract extends DolibarrModules
         	$conf->dolistorextract=new stdClass();
         	$conf->dolistorextract->enabled=0;
         }
-        
+
         // Dictionaries
 		$this->dictionaries=array();
         /* Example:
@@ -184,8 +184,8 @@ class modDolistorextract extends DolibarrModules
 		// Cronjobs
 		$this->cronjobs = array(
 				0=>array('label'=>'DolistorExtract', 'jobtype'=>'method', 'class'=>'/dolistorextract/class/dolistorextractCron.class.php', 'objectname'=>'dolistorextractCron', 'method'=>'runImport', 'parameters'=>'', 'comment'=>'Comment', 'frequency'=>24, 'unitfrequency'=>3600, 'test'=>true)
-		);			
-		
+		);
+
 		// Permissions
 		$this->rights = array();		// Permission array used by this module
 		$r=0;
@@ -204,7 +204,7 @@ class modDolistorextract extends DolibarrModules
 		$this->rights[$r][3] = 0; 					// Permission by default for new user (0/1)
 		$this->rights[$r][4] = 'read';				// In php code, permission will be checked by test if ($user->rights->permkey->level1->level2)
 		//$this->rights[$r][5] = 'level2';				// In php code, permission will be checked by test if ($user->rights->permkey->level1->level2)
-			
+
 		// Main menu entries
 		$this->menu = array();			// List of menus to add
 		$r=0;
@@ -240,7 +240,7 @@ class modDolistorextract extends DolibarrModules
 		//							'target'=>'',
 		//							'user'=>2);				                // 0=Menu for internal users, 1=external users, 2=both
 		// $r++;
-		
+
 		$this->menu[$r]=array(	'fk_menu'=>'fk_mainmenu=tools',		    // '' if this is a top menu. For left menu, use 'fk_mainmenu=xxx' or 'fk_mainmenu=xxx,fk_leftmenu=yyy' where xxx is mainmenucode and yyy is a leftmenucode
 								'type'=>'left',			                // This is a Left menu entry
 								'titre'=>'DolistorextractMenuTitle',
