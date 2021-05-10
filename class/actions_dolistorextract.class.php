@@ -367,7 +367,7 @@ class ActionsDolistorextract
 			else {
 				$contact = new Contact($this->db);
 				if ($contact->fetch('', '', '', $datas['email']) > 0) {
-					$searchSoc = $socStatic->fetch($contact->socid) > 0;  // Retourne -2 si on trouve plusieurs Tiers
+					$searchSoc = $socStatic->fetch($contact->socid);  // Retourne -2 si on trouve plusieurs Tiers
 				}
 			}
 			if(empty($datas['invoice_company'])) {
@@ -384,7 +384,7 @@ class ActionsDolistorextract
                     }
                 }
                 else {
-                    if(! empty($searchSoc)) $socid = $searchSoc;
+                    if(! empty($searchSoc) && $searchSoc > 0) $socid = $searchSoc;
                     else {
                         // Customer not found => creation
                         $socid = $dolistorextractActions->newCustomerFromDatas($userStatic, $dolistoreMail);
