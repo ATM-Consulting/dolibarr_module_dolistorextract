@@ -44,7 +44,7 @@ class ActionsDolistorextract
 	public $errno = 0;
 	public $template_dir;
 	public $template;
-	
+
 
 	/**
 	 *    Constructor
@@ -68,22 +68,22 @@ class ActionsDolistorextract
 	public function emailElementlist($parameters, &$object, &$action, $hookmanager)
 	{
 		global $langs;
-		 
+
 		$error = 0;
-		 
+
 		if (in_array('admin', explode(':', $parameters['context']))) {
 			$this->results = array('dolistore_extract' => $langs->trans('DolistorextractMessageToSendAfterDolistorePurchase'));
 		}
-		 
+
 		if (! $error) {
 			return 0; // or return 1 to replace standard code
 		} else {
 			$this->errors[] = 'Error message';
 			return -1;
 		}
-	
+
 	}
-	
+
 	/**
 	 * Create a new customer with email datas
 	 *
@@ -94,9 +94,9 @@ class ActionsDolistorextract
 	public function newCustomerFromDatas(User $user, dolistoreMail $dolistoreMail)
 	{
 		global $conf;
-		
+
 		$socStatic = new Societe($this->db);
-	
+
 		if (empty($dolistoreMail->invoice_company) || empty($dolistoreMail->email)) {
 			return -1;
 		}
@@ -113,7 +113,7 @@ class ActionsDolistorextract
 			if ($res) break;
 		}
 		$modCodeClient = new $module;
-		
+
 		$socStatic->code_client = $modCodeClient->getNextValue($socStatic,0);
 		$socStatic->name = $dolistoreMail->invoice_company;
 		$socStatic->name_bis = $dolistoreMail->invoice_lastname;
@@ -145,7 +145,7 @@ class ActionsDolistorextract
 		}
 		return $socid;
 	}
-	
+
 	/**
 	 * Ajoute le client $socid dans la catégorie correspondante au module $productRef
 	 *
@@ -159,9 +159,9 @@ class ActionsDolistorextract
 	{
 		$socStatic = new Societe($this->db);
 		$catStatic = new Categorie($this->db);
-	
+
 		$catStatic->id = $this->searchCategoryDolistore($productRef);
-	
+
 		if ($catStatic->id > 0 && $socStatic->fetch($socid)) {
 			return $catStatic->add_type($socStatic, 'customer');
 		} else {
@@ -169,7 +169,7 @@ class ActionsDolistorextract
 		}
 		return 0;
 	}
-	
+
 	/**
 	 * Search a category with extrafield `ref_dolistore` value
 	 *
@@ -179,7 +179,7 @@ class ActionsDolistorextract
 	public function searchCategoryDolistore($productRef)
 	{
 		$sql = "SELECT fk_object FROM ".MAIN_DB_PREFIX."categories_extrafields WHERE ref_dolistore='".$productRef."'";
-	
+
 		dol_syslog(__METHOD__, LOG_DEBUG);
 		$resql = $this->db->query($sql);
 		$result = 0;
@@ -196,7 +196,7 @@ class ActionsDolistorextract
 			return -1;
 		}
 	}
-	
+
 	/**
 	 * Create an event
 	 *
@@ -207,31 +207,31 @@ class ActionsDolistorextract
 	public function createEventFromExtractDatas($productDatas, $orderRef, $socid)
 	{
 		global $conf, $langs;
-	
+
 		// Check value
 		if (empty($orderRef) || empty($productDatas['item_reference'])) {
 			dol_syslog(__METHOD__.' Error : params order_name and product_ref missing');
 			return -1;
 		}
-		
+
 		$res = 0;
-	
+
 		$userStatic = new User($this->db);
 		$userStatic->fetch($conf->global->DOLISTOREXTRACT_USER_FOR_ACTIONS);
-	
+
 		require_once DOL_DOCUMENT_ROOT.'/comm/action/class/actioncomm.class.php';
 		$actionStatic = new ActionComm($this->db);
-		
+
 		$actionStatic->socid = $socid;
-	
+
 		$actionStatic->authorid = $conf->global->DOLISTOREXTRACT_USER_FOR_ACTIONS;
 		$actionStatic->userownerid = $conf->global->DOLISTOREXTRACT_USER_FOR_ACTIONS;
-		
+
 		$actionStatic->datec = time();
 		$actionStatic->datem = time();
 		$actionStatic->datep = time();
 		$actionStatic->percentage = 100;
-	
+
 		$actionStatic->type_code = 'AC_STRXTRACT';
 		$actionStatic->label = $langs->trans('DolistorextractLabelActionForSale', $productDatas['item_name'] .' ('.$productDatas['item_reference'].')');
 		// Define a tag which allow to detect twice
@@ -239,15 +239,15 @@ class ActionsDolistorextract
 		// Check if import already done
 		if(! $this->isAlreadyImported($actionStatic->note)) {
 			$res = $actionStatic->create($userStatic);
-			
+
 		}
 		return $res;
 	}
-	
+
 	private function isAlreadyImported($noteString)
 	{
 		$sql = "SELECT id FROM ".MAIN_DB_PREFIX."actioncomm WHERE note='".$noteString."'";
-		
+
 		dol_syslog(__METHOD__, LOG_DEBUG);
 		$resql = $this->db->query($sql);
 		$result = 0;
@@ -268,63 +268,63 @@ class ActionsDolistorextract
 	/**
 	 * Method to launch CRON job to import datas from emails
 	 */
-	public function launchCronJob() 
+	public function launchCronJob()
 	{
 		global $langs, $conf;
-		
-		
+
+
 		$langs->load('main');
-		
+
 		$mailbox = $conf->global->DOLISTOREXTRACT_IMAP_SERVER;
 		$username = $conf->global->DOLISTOREXTRACT_IMAP_USER;
 		$password = $conf->global->DOLISTOREXTRACT_IMAP_PWD;
 		$encryption = Imap::ENCRYPT_SSL;
-		
+
 		// Open connection
 		try{
 			$imap = new Imap($mailbox, $username, $password, $encryption);
 			// You can also check out example-connect.php for more connection options
-		
+
 		}catch (ImapClientException $error){
 			echo $error->getMessage().PHP_EOL;
 			die(); // Oh no :( we failed
 		}
-		
+
 		// Select the folder Inbox
 		$imap->selectFolder('INBOX');
-		
+
 		// Fetch all the messages in the current folder
 		$emails = $imap->getMessages();
-		
+
 		$mailSent = 0;
-		
-		
+
+
 		foreach($emails as $email) {
-		
+
 			// Only mails from Dolistore and not seen
 			if (strpos($email->header->subject, 'DoliStore') > 0 && !$email->header->seen) {
-		
+
 				$res = $this->launchImportProcess($email);
 				if ($res > 0) {
 					++$mailSent;
 					// Mark email as read
 					$imap->setSeenMessage($email->header->msgno, true);
-				} 
+				}
 			}
 		}
 		$this->output=trim($langs->trans('EMailSentForNElements',$mailSent));
 		return $mailSent;
-		
+
 	}
 	/**
 	 * Launch all import process
 	 * @param unknown $email Object from imap fetch with lib
 	 */
 	public function launchImportProcess($email) {
-		
+
 		global $conf;
 		dol_syslog(__METHOD__.' launch import process for message '.$email->header->uid, LOG_DEBUG);
-		
+
 		if (!class_exists('Societe')) {
 			require_once(DOL_DOCUMENT_ROOT.'/societe/class/societe.class.php');
 		}
@@ -337,16 +337,16 @@ class ActionsDolistorextract
 		if (!class_exists('dolistoreMail')) {
 		    dol_include_once('/dolistorextract/class/dolistoreMail.class.php');
 		}
-		
+
 		$dolistoreMailExtract = new \dolistoreMailExtract($this->db, $email->message->html);
 		$dolistoreMail = new \dolistoreMail();
 		$dolistorextractActions = new \ActionsDolistorextract($this->db);
-		
+
 		$userStatic = new \User($this->db);
 		$userStatic->fetch($conf->global->DOLISTOREXTRACT_USER_FOR_ACTIONS);
-		
+
 		$mailSent = 0; // Count number of sent emails
-		
+
 		$langEmail = $dolistoreMailExtract->detectLang($email->header->subject);
 		$datas = $dolistoreMailExtract->extractAllDatas();
 		$dolistoreMail->setDatas($datas);
@@ -360,12 +360,16 @@ class ActionsDolistorextract
 			$socStatic = new Societe($this->db);
 			// Search exactly by name
 			$filterSearch = array();
-            if(floatval(DOL_VERSION) <= 8.0) {
-                $searchSoc = $socStatic->searchByName($datas['invoice_company'], 0, $filterSearch, true, false);
-            }
-            else {
-                $searchSoc = $socStatic->fetch('', $datas['invoice_company']);  // Retourne -2 si on trouve plusieurs Tiers
-            }
+			$searchSoc = null;
+			if(floatval(DOL_VERSION) <= 8.0) {
+				$searchSoc = $socStatic->searchByName($datas['invoice_company'], 0, $filterSearch, true, false);
+			}
+			else {
+				$contact = new Contact($this->db);
+				if ($contact->fetch('', '', '', $datas['email']) > 0) {
+					$searchSoc = $socStatic->fetch($contact->socid);  // Retourne -2 si on trouve plusieurs Tiers
+				}
+			}
 			if(empty($datas['invoice_company'])) {
 				print "Erreur recherche client";
 			} else {
@@ -380,26 +384,26 @@ class ActionsDolistorextract
                     }
                 }
                 else {
-                    if(! empty($searchSoc)) $socid = $searchSoc;
+                    if(! empty($searchSoc) && $searchSoc > 0) $socid = $searchSoc;
                     else {
                         // Customer not found => creation
                         $socid = $dolistorextractActions->newCustomerFromDatas($userStatic, $dolistoreMail);
                     }
                 }
-			
+
 				if($socid > 0) {
-					
+
 					// Flag to know if we want to send email or not
 					$mailToSend = false;
-						
+
 					$socStatic->fetch($socid);
 					$listProduct = array();
-			
+
 					// Loop on each product
 					foreach ($dolistoreMail->items as $product) {
 					    // Save list of products for email message
 					    $listProduct[] = $product['item_name'];
-					    
+
 						$catStatic = new Categorie($this->db);
 						$foundCatId = 0;
 						// Search existant category *by product reference*
@@ -407,7 +411,7 @@ class ActionsDolistorextract
 						if(! $resCatRef) {
 							//print 'Pas de catégorie dolistore trouvée pour la ref='.$product['item_reference'].'<br />';
 							dol_syslog('No dolistore category found for ref='.$product['item_reference'], LOG_DEBUG);
-			
+
 							// Search existant category *by label*
 							$resCatLabel = $catStatic->fetch('', $product['item_name']);
 							if($resCatLabel > 0) {
@@ -418,29 +422,29 @@ class ActionsDolistorextract
 							$foundCatId = $resCatRef;
 							//echo "<br />Catégorie dolistore trouvée pour ref ".$product['item_reference']." (".$product['item_name'].") : ".$resultCat;
 						}
-			
+
 						// Category found : continue process
 						if($foundCatId) {
 							// Retrieve category information
 							$catStatic->fetch($foundCatId);
-							
-							
+
+
 							$exist = $catStatic->containsObject('customer', $socid);
 							// Link thirdparty to category
 							$catStatic->add_type($socStatic,'customer');
-			
+
 							// Event creation
 							$result = $dolistorextractActions->createEventFromExtractDatas($product, $dolistoreMail->order_name, $socid);
-							
+
 							if ($result > 0) {
 								$mailToSend = true;
 							}else if ($result == 0) {
 								++$mailSent;
 							}
-								
+
 						}
 					} // End products loop
-					
+
 					/*
 					 *  Send mail
 					 */
@@ -448,7 +452,7 @@ class ActionsDolistorextract
 						require_once DOL_DOCUMENT_ROOT.'/core/class/CMailFile.class.php';
 						require_once DOL_DOCUMENT_ROOT.'/core/class/html.formmail.class.php';
 						$formMail = new FormMail($this->db);
-						
+
 						$from = $conf->global->MAIN_INFO_SOCIETE_NOM .' <dolistore@atm-consulting.fr>';
 						$sendto = $dolistoreMail->email;
 						$sendtocc = '';
@@ -456,7 +460,7 @@ class ActionsDolistorextract
 						$trackid = '';
 						$deliveryreceipt = 0;
 						$trackid = '';
-							
+
 						// EN template by default
 						$idTemplate = $conf->global->DOLISTOREXTRACT_EMAIL_TEMPLATE_EN;
 						if(preg_match('/fr.*/', $langEmail)) {
@@ -471,17 +475,17 @@ class ActionsDolistorextract
 								'__DOLISTORE_INVOICE_LASTNAME__' => $dolistoreMail->invoice_lastname,
 						        '__DOLISTORE_LIST_PRODUCTS__' => $listProductString
 						];
-				
+
 						$subject=make_substitutions($usedTemplate->topic, $arraySubstitutionDolistore);
 						$message=make_substitutions($usedTemplate->content, $arraySubstitutionDolistore);
-				
-	
+
+
 						$mailfile = new CMailFile($subject, $sendto, $from, $message, array(), array(), array(), $sendtocc, $sendtobcc, $deliveryreceipt, -1, '', '', $trackid);
 						if ($mailfile->error)
 						{
 							++$error;
 							dol_syslog('Dolistorextract::mail:' .$mailfile->error, LOG_ERROR);
-				
+
 						}
 						else
 						{
@@ -501,12 +505,12 @@ class ActionsDolistorextract
 			++$error;
 			array_push($this->errors, 'No data for email '.$email->header->uid);
 		}
-	
+
 		if ($error) {
 			return -1 * $error;
 		} else {
 			return $mailSent;
 		}
-		
+
 	}
 }
