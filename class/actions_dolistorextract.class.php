@@ -366,8 +366,24 @@ class ActionsDolistorextract
 			}
 			else {
 				$contact = new Contact($this->db);
-				if ($contact->fetch('', '', '', $datas['email']) > 0) {
-					$searchSoc = $socStatic->fetch($contact->socid);  // Retourne -2 si on trouve plusieurs Tiers
+				$resfetch = $contact->fetch('', '', '', trim($datas['email']));
+				if ($resfetch > 0) {
+
+					if($resfetch > 1) { // Plusieurs contacts avec cette adresse, donc potentiellement plusieurs tiers, on prend le plus ancien
+						$q = 'SELECT s.rowid
+								FROM '.MAIN_DB_PREFIX.'societe s
+								INNER JOIN '.MAIN_DB_PREFIX.'socpeople sp ON (sp.fk_soc = s.rowid)
+								WHERE sp.email = "'.$datas['email'].'"
+								ORDER BY s.rowid ASC
+								LIMIT 1';
+						$resql = $this->db->query($q);
+						if(!empty($resql)) {
+							$res = $this->db->fetch_object($resql);
+							$searchSoc = $res->rowid;
+						}
+					} else {
+						$searchSoc = $socStatic->fetch($contact->socid);  // Retourne -2 si on trouve plusieurs Tiers
+					}
 				}
 			}
 			if(empty($datas['invoice_company'])) {
