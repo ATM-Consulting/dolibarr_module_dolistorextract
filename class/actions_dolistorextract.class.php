@@ -309,6 +309,10 @@ class ActionsDolistorextract
 					++$mailSent;
 					// Mark email as read
 					$imap->setSeenMessage($email->header->msgno, true);
+					$imap->moveMessage($email->header->msgno,'INBOX/ARCHIVES');
+				}else{
+					$imap->moveMessage($email->header->msgno,'INBOX/ERRORS');
+
 				}
 			}
 		}
@@ -324,6 +328,8 @@ class ActionsDolistorextract
 
 		global $conf;
 		dol_syslog(__METHOD__.' launch import process for message '.$email->header->uid, LOG_DEBUG);
+
+		$error = 0;
 
 		if (!class_exists('Societe')) {
 			require_once(DOL_DOCUMENT_ROOT.'/societe/class/societe.class.php');
