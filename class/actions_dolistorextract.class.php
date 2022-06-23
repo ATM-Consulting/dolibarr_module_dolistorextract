@@ -140,8 +140,8 @@ class ActionsDolistorextract
 		$socid = $socStatic->create($user);
 		if($socid > 0) {
 			$res = $socStatic->create_individual($user);
-		} else {
-			var_dump($socStatic->errors);
+		} else if(is_array($socStatic->errors)){
+			$this->errors = array_merge($this->errors, $socStatic->errors);
 		}
 		return $socid;
 	}

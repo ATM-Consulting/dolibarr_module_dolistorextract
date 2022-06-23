@@ -47,8 +47,13 @@ class dolistorextractCron
 		$res = $dolistorextractActions->launchCronJob();
 		if ($res <= 0) {
 			$this->output.= 'erreur import dolistore!';
+
+			if(!empty($dolistorextractActions->error)){
+				$this->output.= '<br/>'.$dolistorextractActions->error;
+			}
+
 			if(!empty($dolistorextractActions->errors) && is_array($dolistorextractActions->errors)){
-				$this->output.= implode(';',$dolistorextractActions->errors);
+				$this->output.= implode('<br/>',$dolistorextractActions->errors);
 			}
 
 			return -1;
