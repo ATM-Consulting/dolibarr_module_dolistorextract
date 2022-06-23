@@ -20,41 +20,43 @@
  * @author jfefe
  *
  */
-class dolistorextractCron 
+class dolistorextractCron
 {
 
 	public $db;
-	
+
 	function __construct(&$db) {
 		$this->db = $db;
 	}
-	
+
 	/**
-	 * Method to call with CRON module 
+	 * Method to call with CRON module
 	 */
 	public function runImport()
 	{
-		
+
 		global $conf, $langs, $user, $db;
-		
+
 		// Fetch user conf pour les actions etc. à créer
 		$user = new User($db);
 		$user->fetch($conf->global->DOLISTOREXTRACT_USER_FOR_ACTIONS);
-		
+
 		require_once 'actions_dolistorextract.class.php';
-		
+
 		$dolistorextractActions = new \ActionsDolistorextract($this->db);
 		$res = $dolistorextractActions->launchCronJob();
 		if ($res <= 0) {
-			print 'erreur import dolistore!';
-			print_r($dolistorextractActions->errors);
-			$this->output = implode(';',$dolistorextractActions->errors);
+			$this->output.= 'erreur import dolistore!';
+			if(!empty($dolistorextractActions->errors) && is_array($dolistorextractActions->errors)){
+				$this->output.= implode(';',$dolistorextractActions->errors);
+			}
+
 			return -1;
 		}
 		if($res > 0) {
 			$this->output = $res . ' ventes intégrées';
 			return 0;
 		}
-		
+
 	}
 }
