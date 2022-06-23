@@ -286,8 +286,8 @@ class ActionsDolistorextract
 			// You can also check out example-connect.php for more connection options
 
 		}catch (ImapClientException $error){
-			echo $error->getMessage().PHP_EOL;
-			die(); // Oh no :( we failed
+			$this->errors[] = $error->getMessage().PHP_EOL;
+			return -1;
 		}
 
 		// Select the folder Inbox
@@ -297,7 +297,6 @@ class ActionsDolistorextract
 		$emails = $imap->getMessages();
 
 		$mailSent = 0;
-
 
 		foreach($emails as $email) {
 
@@ -312,7 +311,6 @@ class ActionsDolistorextract
 					$imap->moveMessage($email->header->msgno,'INBOX/ARCHIVES');
 				}else{
 					$imap->moveMessage($email->header->msgno,'INBOX/ERRORS');
-
 				}
 			}
 		}
@@ -392,8 +390,10 @@ class ActionsDolistorextract
 					}
 				}
 			}
+
 			if(empty($datas['invoice_company'])) {
-				print "Erreur recherche client";
+				++$error;
+				array_push($this->errors,  "Erreur recherche client");
 			} else {
                 if(floatval(DOL_VERSION) <= 8.0) {
                     // Customer found

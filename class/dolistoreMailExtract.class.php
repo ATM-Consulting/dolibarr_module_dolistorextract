@@ -27,7 +27,7 @@ class dolistoreMailExtract
 	 * @var Db $db DB object
 	 */
 	public $db;
-	
+
 	/**
 	 *
 	 * @var string $htmlBody	Body of the message, HTML version
@@ -110,8 +110,8 @@ class dolistoreMailExtract
 				if ($cell->span) {
 					$attribute = (string) $cell->span->attributes()->class;
 					if (in_array($attribute, $confDolExtract->arrayExtractTagsProduct)) {
-						$extractProducts[$i][${attribute}] = (string) $cell->span;
-					}					
+						$extractProducts[$i][$attribute] = (string) $cell->span;
+					}
 				} else if ($cell->strong->span) { // Case for product title
 					$extractProducts[$i]['item_name'] = (string) $cell->strong->span;
 				}
@@ -143,7 +143,7 @@ class dolistoreMailExtract
 		if (is_array($lines) && count($lines) > 0) {
 			$datas['items'] = $lines;
 		}
-		
+
 		if(empty($datas['invoice_company'])) {
 			if(!empty($datas['invoice_lastname']) && !empty($datas['invoice_firstname'])) {
 				$datas['invoice_company'] = $datas['invoice_firstname'].' '.$datas['invoice_lastname'];
@@ -152,10 +152,10 @@ class dolistoreMailExtract
 
 		return (array) $datas;
 	}
-	
+
 	/**
 	 * Detect email lang from subject
-	 * 
+	 *
 	 * @param string $subject
 	 * @return string Langage code
 	 * @see dolistoreMailExtract::ARRAY_TITLE_TRANSLATION_MAP
@@ -164,7 +164,7 @@ class dolistoreMailExtract
 	{
 		$foundLang = '';
 		$confDolExtract = new dolistorextractConfig();
-		
+
 		foreach ($confDolExtract->arrayTitleTranslationMap as $key => $lang) {
 			if (preg_match('/'.$key.'/', $subject)) {
 				$foundLang = $lang;
@@ -173,10 +173,10 @@ class dolistoreMailExtract
 		}
 		return $foundLang;
 	}
-	
+
 	/**
 	 * Extract customer data from plain text mail
-	 * 
+	 *
 	 * @param string $textPlain Text message, plain format
 	 * @param string $lang Lang code
 	 * @return array
@@ -186,67 +186,67 @@ class dolistoreMailExtract
 		$customerDatas = array();
 		$arrayLines = explode("\n", $textPlain);
 		$confDolExtract = new dolistorextractConfig();
-		
-		
+
+
 		// Search in each line if match found for datas
 		for ($i=0; $i < count($arrayLines); $i++) {
-			
+
 			$line = $arrayLines[$i];
 			if ($line == "") continue;
 
 			switch ($lang) {
 				case 'fr_FR' || 'es_ES':
-			
+
 				    if (preg_match($confDolExtract->arrayPatternMailThirdpartyMap[${lang}], $line, $matches)) {
 						$emailExtract = "";
-						
+
 						// string contains "THIRDPARTY CONTACT_NAME (EMAIL)
 						$coordAll = $matches[1];
-						
-						// Extract email : text between () chars
-						if (preg_match('/.*\((.*)\)/', $coordAll, $matchMail)) {				
-							$customerDatas['email'] =  $matchMail[1];
-						}
-						// Extract all not between () chars
-						if (preg_match('/(.*)\(.*@.*\)/', $coordAll, $matchName)) {
-							$customerDatas['contact_name'] =  trim($matchName[1]);
-						}
-						
-						
-					}
-					
-					break;
-					
-				case "en_US":
-					
-					if (preg_match('/A new order was placed on DoliStore from the following customer/', $line)) {
-						$emailExtract = "";
-					
-						// In english mail contains a new line for customer data
-						$coordAll = $arrayLines[${i}+1];
-											
+
 						// Extract email : text between () chars
 						if (preg_match('/.*\((.*)\)/', $coordAll, $matchMail)) {
 							$customerDatas['email'] =  $matchMail[1];
 						}
-						
 						// Extract all not between () chars
 						if (preg_match('/(.*)\(.*@.*\)/', $coordAll, $matchName)) {
 							$customerDatas['contact_name'] =  trim($matchName[1]);
 						}
-						
+
+
+					}
+
+					break;
+
+				case "en_US":
+
+					if (preg_match('/A new order was placed on DoliStore from the following customer/', $line)) {
+						$emailExtract = "";
+
+						// In english mail contains a new line for customer data
+						$coordAll = $arrayLines[${i}+1];
+
+						// Extract email : text between () chars
+						if (preg_match('/.*\((.*)\)/', $coordAll, $matchMail)) {
+							$customerDatas['email'] =  $matchMail[1];
+						}
+
+						// Extract all not between () chars
+						if (preg_match('/(.*)\(.*@.*\)/', $coordAll, $matchName)) {
+							$customerDatas['contact_name'] =  trim($matchName[1]);
+						}
+
 					}
 					break;
 				default:
 					print 'pas de regex pour lang='.$lang;
 					break;
-					
+
 			}
 		}
 		return $customerDatas;
 	}
 
-	
+
 	public static function extractOrderDatasFromSubject($subject)
 	{
 		$orderDatas = array();
