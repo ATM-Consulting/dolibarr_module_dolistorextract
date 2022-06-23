@@ -45,6 +45,7 @@ class dolistorextractCron
 
 		$dolistorextractActions = new \ActionsDolistorextract($this->db);
 		$res = $dolistorextractActions->launchCronJob();
+		$this->output.= $this->logCat;
 		if ($res <= 0) {
 			$this->output.= 'erreur import dolistore!';
 
@@ -58,6 +59,7 @@ class dolistorextractCron
 
 			return -1;
 		}
+
 		if($res > 0) {
 			$this->output = $res . ' ventes intégrées';
 			return 0;

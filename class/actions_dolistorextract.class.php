@@ -45,6 +45,7 @@ class ActionsDolistorextract
 	public $template_dir;
 	public $template;
 
+	public $logCat = '';
 
 	/**
 	 *    Constructor
@@ -438,11 +439,11 @@ class ActionsDolistorextract
 							$resCatLabel = $catStatic->fetch('', $product['item_name']);
 							if($resCatLabel > 0) {
 								$foundCatId = $catStatic->id;
-								//echo "<br />Catégorie trouvée pour ref ".$product['item_reference']." (".$product['item_name'].") : ".$catStatic->getNomUrl(1);
+								$this->logCat.= "<br />Catégorie trouvée pour ref ".$product['item_reference']." (".$product['item_name'].") : ".$catStatic->getNomUrl(1);
 							}
 						} else {
 							$foundCatId = $resCatRef;
-							//echo "<br />Catégorie dolistore trouvée pour ref ".$product['item_reference']." (".$product['item_name'].") : ".$resultCat;
+							$this->logCat.= "<br />Catégorie dolistore trouvée pour ref ".$product['item_reference']." (".$product['item_name'].") : ".$resultCat;
 						}
 
 						// Category found : continue process
