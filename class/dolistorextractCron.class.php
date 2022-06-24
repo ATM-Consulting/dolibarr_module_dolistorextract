@@ -35,17 +35,13 @@ class dolistorextractCron
 	public function runImport()
 	{
 
-		global $conf, $langs, $user, $db;
-
-		// Fetch user conf pour les actions etc. à créer
-		$user = new User($db);
-		$user->fetch($conf->global->DOLISTOREXTRACT_USER_FOR_ACTIONS);
+		global $conf, $langs, $db;
 
 		require_once 'actions_dolistorextract.class.php';
 
 		$dolistorextractActions = new \ActionsDolistorextract($this->db);
 		$res = $dolistorextractActions->launchCronJob();
-		$this->output.= $this->logCat;
+		$this->output.= '<p>'.$dolistorextractActions->logCat.'</p>';
 		if ($res <= 0) {
 			$this->output.= 'erreur import dolistore!';
 
@@ -61,9 +57,8 @@ class dolistorextractCron
 		}
 
 		if($res > 0) {
-			$this->output = $res . ' ventes intégrées';
+			$this->output.= $res . ' ventes intégrées';
 			return 0;
 		}
-
 	}
 }

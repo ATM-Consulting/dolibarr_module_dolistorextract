@@ -292,30 +292,55 @@ class ActionsDolistorextract
 		}
 
 		// Select the folder Inbox
-		$imap->selectFolder('INBOX');
+		$imap->selectFolder(!empty($conf->global->DOLISTOREXTRACT_IMAP_FOLDER)?$conf->global->DOLISTOREXTRACT_IMAP_FOLDER:'INBOX');
 
 		// Fetch all the messages in the current folder
+
 		$emails = $imap->getMessages();
+		$this->logCat.= '<br/><strong>Mail to process</strong> :'.count($emails);
 
 		$mailSent = 0;
 
+		if(!empty($conf->global->DOLISTOREXTRACT_DISABLE_SEND_THANK_YOU)){
+			$this->logCat.= '<br/><strong class="error">Mail send disabled</strong>';
+		}
+		/**
+		 * @var IncomingMessage[] $emails
+		 */
 		foreach($emails as $email) {
+
+			$this->logCat.= '<br/><strong>Processing :</strong> '.$email->header->subject;
 
 			// Only mails from Dolistore and not seen
 			if (strpos($email->header->subject, 'DoliStore') > 0 && !$email->header->seen) {
-
+				$this->logCat.= '<br/>-> launch Import Process ';
 				$res = $this->launchImportProcess($email);
 				if ($res > 0) {
+					$this->logCat.= '-> <stong>OK</stong>';
 					++$mailSent;
 					// Mark email as read
 					$imap->setSeenMessage($email->header->msgno, true);
-					$imap->moveMessage($email->header->msgno,'INBOX/ARCHIVES');
+					if(!empty($conf->global->DOLISTOREXTRACT_IMAP_FOLDER_ARCHIVE)) {
+						$resMov = $imap->moveMessage($email->header->uid, $conf->global->DOLISTOREXTRACT_IMAP_FOLDER_ARCHIVE);
+						if(!$resMov){
+							$this->logCat.='<br/>Erreur move message '.$email->header->uid.' TO '.$conf->global->DOLISTOREXTRACT_IMAP_FOLDER_ARCHIVE;
+						}
+					}
 				}else{
-					$imap->moveMessage($email->header->msgno,'INBOX/ERRORS');
+					$this->logCat.= '-> <stong class="error">FAIL</stong>';
+					if(!empty($conf->global->DOLISTOREXTRACT_IMAP_FOLDER_ERROR)) {
+						$resMov = $imap->moveMessage($email->header->uid, $conf->global->DOLISTOREXTRACT_IMAP_FOLDER_ERROR);
+						if(!$resMov){
+							$this->logCat.='<br/>Erreur move message '.$email->header->uid.' TO '.$conf->global->DOLISTOREXTRACT_IMAP_FOLDER_ERROR;
+						}
+					}
 				}
 			}
+			else{
+				$this->logCat.= '<br/>-> skipped ';
+			}
 		}
-		$this->output=trim($langs->trans('EMailSentForNElements',$mailSent));
+		$this->logCat.='<hr/><stong>'.$langs->trans('EMailSentForNElements',$mailSent).'</strong>';
 		return $mailSent;
 
 	}
@@ -351,6 +376,7 @@ class ActionsDolistorextract
 		$userStatic->fetch($conf->global->DOLISTOREXTRACT_USER_FOR_ACTIONS);
 
 		$mailSent = 0; // Count number of sent emails
+
 
 		$langEmail = $dolistoreMailExtract->detectLang($email->header->subject);
 		$datas = $dolistoreMailExtract->extractAllDatas();
@@ -471,7 +497,10 @@ class ActionsDolistorextract
 					/*
 					 *  Send mail
 					 */
-					if ($mailToSend) {
+					if(!empty($conf->global->DOLISTOREXTRACT_DISABLE_SEND_THANK_YOU)){
+						$mailSent++;
+					}
+					elseif ($mailToSend && empty($conf->global->DOLISTOREXTRACT_DISABLE_SEND_THANK_YOU)) {
 						require_once DOL_DOCUMENT_ROOT.'/core/class/CMailFile.class.php';
 						require_once DOL_DOCUMENT_ROOT.'/core/class/html.formmail.class.php';
 						$formMail = new FormMail($this->db);
