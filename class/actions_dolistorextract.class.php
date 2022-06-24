@@ -340,7 +340,11 @@ class ActionsDolistorextract
 				$this->logCat.= '<br/>-> skipped ';
 			}
 		}
-		$this->logCat.='<hr/><stong>'.$langs->trans('EMailSentForNElements',$mailSent).'</strong>';
+
+		if(empty($conf->global->DOLISTOREXTRACT_DISABLE_SEND_THANK_YOU)){
+			$this->logCat.='<hr/><stong>'.$langs->trans('EMailSentForNElements',$mailSent).'</strong>';
+		}
+
 		return $mailSent;
 
 	}
@@ -382,6 +386,13 @@ class ActionsDolistorextract
 		$datas = $dolistoreMailExtract->extractAllDatas();
 		$dolistoreMail->setDatas($datas);
 		if (is_array($datas) and count($datas) > 0) {
+
+			$this->logCat.= '<div>';
+			foreach ($datas as $dk => $dv){
+				$this->logCat.='<br/>'.$dk.' : '.$dv;
+			}
+			$this->logCat.= '</div>';
+
 			/*
 			 * import client si non existant
 			 - liaison du client à une catégorie (utilisation d'un extrafield pour stocker la référence produit sur la catégorie)
@@ -469,7 +480,7 @@ class ActionsDolistorextract
 							}
 						} else {
 							$foundCatId = $resCatRef;
-							$this->logCat.= "<br />Catégorie dolistore trouvée pour ref ".$product['item_reference']." (".$product['item_name'].") : ".$resultCat;
+							$this->logCat.= "<br />Catégorie dolistore trouvée pour ref ".$product['item_reference']." (".$product['item_name'].") : ".$resCatRef;
 						}
 
 						// Category found : continue process
