@@ -1,7 +1,7 @@
 <?php
 /**
  * Copyright (C) 2016-2017  SSilence
- * For the full license, please see LICENSE. 
+ * For the full license, please see LICENSE.
  */
 
 namespace SSilence\ImapClient;
@@ -120,9 +120,9 @@ class ImapClient
      * $return imap
      */
     public function getImapConnection() {
-        return $this->imap;   
+        return $this->imap;
     }
-    
+
     /**
      * Set connection config
      *
@@ -737,7 +737,7 @@ class ImapClient
             return false;
         return imap_expunge($this->imap);
     }
-    
+
     /**
      * Delete flag message SEEN
      *
@@ -749,7 +749,7 @@ class ImapClient
     	// We need better docs for this
     	return imap_clearflag_full($this->imap, $ids, "\\Seen");
     }
-    
+
     /**
      * Add flag message SEEN
      *
