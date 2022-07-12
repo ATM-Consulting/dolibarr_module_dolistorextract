@@ -96,7 +96,7 @@ if (!function_exists('imap_open')) {
 // Subheader
 $linkback = '<a href="' . DOL_URL_ROOT . '/admin/modules.php">'
 		. $langs->trans("BackToModuleList") . '</a>';
-		
+
 print load_fiche_titre($langs->trans($page_name), $linkback);
 
 // Configuration header
@@ -176,6 +176,62 @@ print '<input type="submit" class="button" value="'.$langs->trans("Update").'" n
 print "</td></tr>\n";
 print '</form>';
 
+
+
+// IMAP FOLDER
+$var=!$var;
+print '<form action="'.$_SERVER["PHP_SELF"].'" method="POST">';
+print '<input type="hidden" name="token" value="'.$_SESSION['newtoken'].'">';
+print '<input type="hidden" name="action" value="update">';
+print '<input type="hidden" name="constname" value="DOLISTOREXTRACT_IMAP_FOLDER">';
+print '<tr '.$bc[$var].'><td>'.$langs->trans("DolistorExtractImapFolder").'</td><td>';
+print '<input type="input" class="text flat" name="constvalue" value="'. $conf->global->DOLISTOREXTRACT_IMAP_FOLDER .'" placeholder="INBOX" />';
+print '</td><td align="center" width="80">';
+print '<input type="submit" class="button" value="'.$langs->trans("Update").'" name="Button">';
+print "</td></tr>\n";
+print '</form>';
+
+
+// IMAP FOLDER ARCHIVE
+$var=!$var;
+print '<form action="'.$_SERVER["PHP_SELF"].'" method="POST">';
+print '<input type="hidden" name="token" value="'.$_SESSION['newtoken'].'">';
+print '<input type="hidden" name="action" value="update">';
+print '<input type="hidden" name="constname" value="DOLISTOREXTRACT_IMAP_FOLDER_ARCHIVE">';
+print '<tr '.$bc[$var].'><td>'.$langs->trans("DolistorExtractImapFolderArchive").'</td><td>';
+print '<input type="input" class="text flat" name="constvalue" value="'. $conf->global->DOLISTOREXTRACT_IMAP_FOLDER_ARCHIVE .'"  placeholder="INBOX/ARCHIVES" />';
+print '</td><td align="center" width="80">';
+print '<input type="submit" class="button" value="'.$langs->trans("Update").'" name="Button">';
+print "</td></tr>\n";
+print '</form>';
+
+// IMAP FOLDER ERROR
+$var=!$var;
+print '<form action="'.$_SERVER["PHP_SELF"].'" method="POST">';
+print '<input type="hidden" name="token" value="'.$_SESSION['newtoken'].'">';
+print '<input type="hidden" name="action" value="update">';
+print '<input type="hidden" name="constname" value="DOLISTOREXTRACT_IMAP_FOLDER_ERROR">';
+print '<tr '.$bc[$var].'><td>'.$langs->trans("DolistorExtractImapFolderError").'</td><td>';
+print '<input type="input" class="text flat" name="constvalue" value="'. $conf->global->DOLISTOREXTRACT_IMAP_FOLDER_ERROR .'" placeholder="INBOX/ERRORS" />';
+print '</td><td align="center" width="80">';
+print '<input type="submit" class="button" value="'.$langs->trans("Update").'" name="Button">';
+print "</td></tr>\n";
+print '</form>';
+
+$var=!$var;
+
+print '<tr '.$bc[$var].'>';
+print '<td>'.$langs->trans('DOLISTOREXTRACT_DISABLE_SEND_THANK_YOU').'</td>';
+print '<td align="center">&nbsp;</td>';
+print '<td align="right">';
+print '<div class="notopnoleft"><form method="POST" action="'.$_SERVER['PHP_SELF'].'">';
+print '<input type="hidden" name="token" value="'.$_SESSION['newtoken'].'">';
+print '<input type="hidden" name="action" value="set_DOLISTOREXTRACT_DISABLE_SEND_THANK_YOU">';
+print ajax_constantonoff('DOLISTOREXTRACT_DISABLE_SEND_THANK_YOU');
+print '</form></div>';
+print '</td></tr>';
+
+
 // User for actions
 $var=!$var;
 print '<form action="'.$_SERVER["PHP_SELF"].'" method="POST">';
@@ -231,20 +287,20 @@ print '<a class="butActions" href="'.$_SERVER['PHP_SELF'].'?action=test_connect"
 
 
 if ($action == 'test_connect') {
-	
-	
+
+
 	$mailbox = $conf->global->DOLISTOREXTRACT_IMAP_SERVER;
 	$username = $conf->global->DOLISTOREXTRACT_IMAP_USER;
 	$password = $conf->global->DOLISTOREXTRACT_IMAP_PWD;
 	$encryption = Imap::ENCRYPT_SSL;
-	
+
 	// Open connection
 	try{
 		$imap = new Imap($mailbox, $username, $password, $encryption);
 		// You can also check out example-connect.php for more connection options
-		
+
 		print '<div class="confirm">OK!</div>';
-	
+
 	}catch (ImapClientException $error){
 		print '<div class="error">';
 		print $error->getMessage().PHP_EOL;

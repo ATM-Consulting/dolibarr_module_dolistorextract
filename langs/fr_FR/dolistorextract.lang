@@ -55,3 +55,8 @@ DolistorextractLabelActionForSale = Achat module %s
 #
 DolistoreMailsList = Liste des emails Dolistore
 DolistoreMailShow = Message Dolistore
+
+DolistorExtractImapFolder = Dossier de lecture des mails
+DolistorExtractImapFolderArchive = Dossier de stockage des mail traités (si vide reste à l'emplacement d'origine)
+DolistorExtractImapFolderError = Dossier de stockage des mail en erreur (si vide reste à l'emplacement d'origine)
+DOLISTOREXTRACT_DISABLE_SEND_THANK_YOU = Desactiver l'envoi du mail de remerciment

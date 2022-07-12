@@ -45,6 +45,7 @@ class ActionsDolistorextract
 	public $template_dir;
 	public $template;
 
+	public $logCat = '';
 
 	/**
 	 *    Constructor
@@ -140,8 +141,8 @@ class ActionsDolistorextract
 		$socid = $socStatic->create($user);
 		if($socid > 0) {
 			$res = $socStatic->create_individual($user);
-		} else {
-			var_dump($socStatic->errors);
+		} else if(is_array($socStatic->errors)){
+			$this->errors = array_merge($this->errors, $socStatic->errors);
 		}
 		return $socid;
 	}
@@ -286,33 +287,64 @@ class ActionsDolistorextract
 			// You can also check out example-connect.php for more connection options
 
 		}catch (ImapClientException $error){
-			echo $error->getMessage().PHP_EOL;
-			die(); // Oh no :( we failed
+			$this->errors[] = $error->getMessage().PHP_EOL;
+			return -1;
 		}
 
 		// Select the folder Inbox
-		$imap->selectFolder('INBOX');
+		$imap->selectFolder(!empty($conf->global->DOLISTOREXTRACT_IMAP_FOLDER)?$conf->global->DOLISTOREXTRACT_IMAP_FOLDER:'INBOX');
 
 		// Fetch all the messages in the current folder
+
 		$emails = $imap->getMessages();
+		$this->logCat.= '<br/><strong>Mail to process</strong> :'.count($emails);
 
 		$mailSent = 0;
 
-
+		if(!empty($conf->global->DOLISTOREXTRACT_DISABLE_SEND_THANK_YOU)){
+			$this->logCat.= '<br/><strong class="error">Mail send disabled</strong>';
+		}
+		/**
+		 * @var IncomingMessage[] $emails
+		 */
 		foreach($emails as $email) {
+
+			$this->logCat.= '<br/><strong>Processing :</strong> '.$email->header->subject;
 
 			// Only mails from Dolistore and not seen
 			if (strpos($email->header->subject, 'DoliStore') > 0 && !$email->header->seen) {
-
+				$this->logCat.= '<br/>-> launch Import Process ';
 				$res = $this->launchImportProcess($email);
 				if ($res > 0) {
+					$this->logCat.= '-> <stong>OK</stong>';
 					++$mailSent;
 					// Mark email as read
 					$imap->setSeenMessage($email->header->msgno, true);
+					if(!empty($conf->global->DOLISTOREXTRACT_IMAP_FOLDER_ARCHIVE)) {
+						$resMov = $imap->moveMessage($email->header->uid, $conf->global->DOLISTOREXTRACT_IMAP_FOLDER_ARCHIVE);
+						if(!$resMov){
+							$this->logCat.='<br/>Erreur move message '.$email->header->uid.' TO '.$conf->global->DOLISTOREXTRACT_IMAP_FOLDER_ARCHIVE;
+						}
+					}
+				}else{
+					$this->logCat.= '-> <stong class="error">FAIL</stong>';
+					if(!empty($conf->global->DOLISTOREXTRACT_IMAP_FOLDER_ERROR)) {
+						$resMov = $imap->moveMessage($email->header->uid, $conf->global->DOLISTOREXTRACT_IMAP_FOLDER_ERROR);
+						if(!$resMov){
+							$this->logCat.='<br/>Erreur move message '.$email->header->uid.' TO '.$conf->global->DOLISTOREXTRACT_IMAP_FOLDER_ERROR;
+						}
+					}
 				}
 			}
+			else{
+				$this->logCat.= '<br/>-> skipped ';
+			}
 		}
-		$this->output=trim($langs->trans('EMailSentForNElements',$mailSent));
+
+		if(empty($conf->global->DOLISTOREXTRACT_DISABLE_SEND_THANK_YOU)){
+			$this->logCat.='<hr/><stong>'.$langs->trans('EMailSentForNElements',$mailSent).'</strong>';
+		}
+
 		return $mailSent;
 
 	}
@@ -324,6 +356,8 @@ class ActionsDolistorextract
 
 		global $conf;
 		dol_syslog(__METHOD__.' launch import process for message '.$email->header->uid, LOG_DEBUG);
+
+		$error = 0;
 
 		if (!class_exists('Societe')) {
 			require_once(DOL_DOCUMENT_ROOT.'/societe/class/societe.class.php');
@@ -347,10 +381,18 @@ class ActionsDolistorextract
 
 		$mailSent = 0; // Count number of sent emails
 
+
 		$langEmail = $dolistoreMailExtract->detectLang($email->header->subject);
 		$datas = $dolistoreMailExtract->extractAllDatas();
 		$dolistoreMail->setDatas($datas);
 		if (is_array($datas) and count($datas) > 0) {
+
+			$this->logCat.= '<div>';
+			foreach ($datas as $dk => $dv){
+				$this->logCat.='<br/>'.$dk.' : '.$dv;
+			}
+			$this->logCat.= '</div>';
+
 			/*
 			 * import client si non existant
 			 - liaison du client à une catégorie (utilisation d'un extrafield pour stocker la référence produit sur la catégorie)
@@ -386,8 +428,10 @@ class ActionsDolistorextract
 					}
 				}
 			}
+
 			if(empty($datas['invoice_company'])) {
-				print "Erreur recherche client";
+				++$error;
+				array_push($this->errors,  "Erreur recherche client");
 			} else {
                 if(floatval(DOL_VERSION) <= 8.0) {
                     // Customer found
@@ -432,11 +476,11 @@ class ActionsDolistorextract
 							$resCatLabel = $catStatic->fetch('', $product['item_name']);
 							if($resCatLabel > 0) {
 								$foundCatId = $catStatic->id;
-								//echo "<br />Catégorie trouvée pour ref ".$product['item_reference']." (".$product['item_name'].") : ".$catStatic->getNomUrl(1);
+								$this->logCat.= "<br />Catégorie trouvée pour ref ".$product['item_reference']." (".$product['item_name'].") : ".$catStatic->getNomUrl(1);
 							}
 						} else {
 							$foundCatId = $resCatRef;
-							//echo "<br />Catégorie dolistore trouvée pour ref ".$product['item_reference']." (".$product['item_name'].") : ".$resultCat;
+							$this->logCat.= "<br />Catégorie dolistore trouvée pour ref ".$product['item_reference']." (".$product['item_name'].") : ".$resCatRef;
 						}
 
 						// Category found : continue process
@@ -464,7 +508,10 @@ class ActionsDolistorextract
 					/*
 					 *  Send mail
 					 */
-					if ($mailToSend) {
+					if(!empty($conf->global->DOLISTOREXTRACT_DISABLE_SEND_THANK_YOU)){
+						$mailSent++;
+					}
+					elseif ($mailToSend && empty($conf->global->DOLISTOREXTRACT_DISABLE_SEND_THANK_YOU)) {
 						require_once DOL_DOCUMENT_ROOT.'/core/class/CMailFile.class.php';
 						require_once DOL_DOCUMENT_ROOT.'/core/class/html.formmail.class.php';
 						$formMail = new FormMail($this->db);
