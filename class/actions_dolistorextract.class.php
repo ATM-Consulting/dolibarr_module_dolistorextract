@@ -424,7 +424,11 @@ class ActionsDolistorextract
 							$searchSoc = $res->rowid;
 						}
 					} else {
-						$searchSoc = $socStatic->fetch($contact->socid);  // Retourne -2 si on trouve plusieurs Tiers
+						// note societe class fetch returns 1 on success, not socid
+						$resSearch = $socStatic->fetch($contact->socid);  // Retourne -2 si on trouve plusieurs Tiers
+                        if ($resSearch) {
+                            $searchSoc = $socStatic->id;
+                        }
 					}
 				}
 			}
