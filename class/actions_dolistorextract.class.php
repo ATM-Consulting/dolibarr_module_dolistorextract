@@ -284,12 +284,15 @@ class ActionsDolistorextract
 		// Open connection
 		try{
 			$imap = new Imap($mailbox, $username, $password, $encryption);
+
 			// You can also check out example-connect.php for more connection options
 
 		}catch (ImapClientException $error){
+
 			$this->errors[] = $error->getMessage().PHP_EOL;
 			return -1;
 		}
+
 
 		// Select the folder Inbox
 		$imap->selectFolder(!empty($conf->global->DOLISTOREXTRACT_IMAP_FOLDER)?$conf->global->DOLISTOREXTRACT_IMAP_FOLDER:'INBOX');
@@ -304,8 +307,10 @@ class ActionsDolistorextract
 		if(!empty($conf->global->DOLISTOREXTRACT_DISABLE_SEND_THANK_YOU)){
 			$this->logCat.= '<br/><strong class="error">Mail send disabled</strong>';
 		}
+
 		/**
 		 * @var IncomingMessage[] $emails
+		 * @return negative value if KO, 0 and positive value is OK
 		 */
 		foreach($emails as $email) {
 
@@ -315,7 +320,8 @@ class ActionsDolistorextract
 			if (strpos($email->header->subject, 'DoliStore') > 0 && !$email->header->seen) {
 				$this->logCat.= '<br/>-> launch Import Process ';
 				$res = $this->launchImportProcess($email);
-				if ($res > 0) {
+
+				if ($res >= 0) {
 					$this->logCat.= '-> <stong>OK</stong>';
 					++$mailSent;
 					// Mark email as read
@@ -326,7 +332,7 @@ class ActionsDolistorextract
 							$this->logCat.='<br/>Erreur move message '.$email->header->uid.' TO '.$conf->global->DOLISTOREXTRACT_IMAP_FOLDER_ARCHIVE;
 						}
 					}
-				}else{
+				} else{
 					$this->logCat.= '-> <stong class="error">FAIL</stong>';
 					if(!empty($conf->global->DOLISTOREXTRACT_IMAP_FOLDER_ERROR)) {
 						$resMov = $imap->moveMessage($email->header->uid, $conf->global->DOLISTOREXTRACT_IMAP_FOLDER_ERROR);
@@ -335,11 +341,14 @@ class ActionsDolistorextract
 						}
 					}
 				}
+
+
 			}
 			else{
 				$this->logCat.= '<br/>-> skipped ';
 			}
 		}
+
 
 		if(empty($conf->global->DOLISTOREXTRACT_DISABLE_SEND_THANK_YOU)){
 			$this->logCat.='<hr/><stong>'.$langs->trans('EMailSentForNElements',$mailSent).'</strong>';
@@ -351,6 +360,7 @@ class ActionsDolistorextract
 	/**
 	 * Launch all import process
 	 * @param unknown $email Object from imap fetch with lib
+	 * @return negative value if KO, 0 and positive value is OK
 	 */
 	public function launchImportProcess($email) {
 
@@ -463,6 +473,7 @@ class ActionsDolistorextract
 					$socStatic->fetch($socid);
 					$listProduct = array();
 
+
 					// Loop on each product
 					foreach ($dolistoreMail->items as $product) {
 					    // Save list of products for email message
@@ -470,8 +481,11 @@ class ActionsDolistorextract
 
 						$catStatic = new Categorie($this->db);
 						$foundCatId = 0;
+
+
 						// Search existant category *by product reference*
 						$resCatRef = $dolistorextractActions->searchCategoryDolistore($product['item_reference']);
+
 						if(! $resCatRef) {
 							//print 'Pas de catégorie dolistore trouvée pour la ref='.$product['item_reference'].'<br />';
 							dol_syslog('No dolistore category found for ref='.$product['item_reference'], LOG_DEBUG);
@@ -481,6 +495,9 @@ class ActionsDolistorextract
 							if($resCatLabel > 0) {
 								$foundCatId = $catStatic->id;
 								$this->logCat.= "<br />Catégorie trouvée pour ref ".$product['item_reference']." (".$product['item_name'].") : ".$catStatic->getNomUrl(1);
+							} else {
+								++$error;
+								array_push($this->errors, 'Pas de catégorie trouvée pour la ref='.$product['item_reference']);
 							}
 						} else {
 							$foundCatId = $resCatRef;
@@ -491,7 +508,6 @@ class ActionsDolistorextract
 						if($foundCatId) {
 							// Retrieve category information
 							$catStatic->fetch($foundCatId);
-
 
 							$exist = $catStatic->containsObject('customer', $socid);
 							// Link thirdparty to category
@@ -512,6 +528,7 @@ class ActionsDolistorextract
 					/*
 					 *  Send mail
 					 */
+
 					if(!empty($conf->global->DOLISTOREXTRACT_DISABLE_SEND_THANK_YOU)){
 						$mailSent++;
 					}
@@ -548,6 +565,8 @@ class ActionsDolistorextract
 
 
 						$mailfile = new CMailFile($subject, $sendto, $from, $message, array(), array(), array(), $sendtocc, $sendtobcc, $deliveryreceipt, -1, '', '', $trackid);
+
+
 						if ($mailfile->error)
 						{
 							++$error;
@@ -563,6 +582,8 @@ class ActionsDolistorextract
 							}
 						}
 					}
+
+
 				} else {
 					++$error;
 					array_push($this->errors, 'No societe found for email '.$email->header->uid);
