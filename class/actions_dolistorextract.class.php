@@ -72,9 +72,9 @@ class ActionsDolistorextract
 
 		$error = 0;
 
-		if (in_array('admin', explode(':', $parameters['context']))) {
+		//if (in_array('admin', explode(':', $parameters['context']))) {
 			$this->results = array('dolistore_extract' => $langs->trans('DolistorextractMessageToSendAfterDolistorePurchase'));
-		}
+		//}
 
 		if (! $error) {
 			return 0; // or return 1 to replace standard code
