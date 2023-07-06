@@ -135,7 +135,7 @@ class ActionsDolistorextract
 		}
 
 		$socStatic->array_options["options_provenance"] = "INT";
-		$socStatic->array_options["options_provenancedet"] = "STORE";
+		$socStatic->import_key = "STORE";
 
 		$socStatic->client = 2; // Prospect / client
 		$socid = $socStatic->create($user);
