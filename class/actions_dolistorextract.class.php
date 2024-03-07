@@ -33,7 +33,7 @@ use SSilence\ImapClient\ImapClient as Imap;
  *    \class      ActionsTicketsup
  *    \brief      Class Actions of the module dolistorextract
  */
-class ActionsDolistorextract
+class ActionsDolistorextract extends CommonHookActions
 {
 	public $db;
 	public $dao;
@@ -102,7 +102,7 @@ class ActionsDolistorextract
 			return -1;
 		}
 		// Load object modCodeTiers
-		$module=(! empty($conf->global->SOCIETE_CODECLIENT_ADDON)?$conf->global->SOCIETE_CODECLIENT_ADDON:'mod_codeclient_leopard');
+		$module=(getDolGlobalString('SOCIETE_CODECLIENT_ADDON')?getDolGlobalString('SOCIETE_CODECLIENT_ADDON'):'mod_codeclient_leopard');
 		if (substr($module, 0, 15) == 'mod_codeclient_' && substr($module, -3) == 'php')
 		{
 			$module = substr($module, 0, dol_strlen($module)-4);
@@ -295,7 +295,7 @@ class ActionsDolistorextract
 
 
 		// Select the folder Inbox
-		$imap->selectFolder(!empty($conf->global->DOLISTOREXTRACT_IMAP_FOLDER)?$conf->global->DOLISTOREXTRACT_IMAP_FOLDER:'INBOX');
+		$imap->selectFolder(getDolGlobalString('DOLISTOREXTRACT_IMAP_FOLDER')?getDolGlobalString('DOLISTOREXTRACT_IMAP_FOLDER'):'INBOX');
 
 		// Fetch all the messages in the current folder
 
@@ -304,7 +304,7 @@ class ActionsDolistorextract
 
 		$mailSent = 0;
 
-		if(!empty($conf->global->DOLISTOREXTRACT_DISABLE_SEND_THANK_YOU)){
+		if(getDolGlobalString('DOLISTOREXTRACT_DISABLE_SEND_THANK_YOU')){
 			$this->logCat.= '<br/><strong class="error">Mail send disabled</strong>';
 		}
 
@@ -326,18 +326,18 @@ class ActionsDolistorextract
 					++$mailSent;
 					// Mark email as read
 					$imap->setSeenMessage($email->header->msgno, true);
-					if(!empty($conf->global->DOLISTOREXTRACT_IMAP_FOLDER_ARCHIVE)) {
+					if(getDolGlobalString('DOLISTOREXTRACT_IMAP_FOLDER_ARCHIVE')) {
 						$resMov = $imap->moveMessage($email->header->uid, $conf->global->DOLISTOREXTRACT_IMAP_FOLDER_ARCHIVE);
 						if(!$resMov){
-							$this->logCat.='<br/>Erreur move message '.$email->header->uid.' TO '.$conf->global->DOLISTOREXTRACT_IMAP_FOLDER_ARCHIVE;
+							$this->logCat.='<br/>Erreur move message '.$email->header->uid.' TO ' . getDolGlobalString('DOLISTOREXTRACT_IMAP_FOLDER_ARCHIVE');
 						}
 					}
 				} else{
 					$this->logCat.= '-> <stong class="error">FAIL</stong>';
-					if(!empty($conf->global->DOLISTOREXTRACT_IMAP_FOLDER_ERROR)) {
+					if(getDolGlobalString('DOLISTOREXTRACT_IMAP_FOLDER_ERROR')) {
 						$resMov = $imap->moveMessage($email->header->uid, $conf->global->DOLISTOREXTRACT_IMAP_FOLDER_ERROR);
 						if(!$resMov){
-							$this->logCat.='<br/>Erreur move message '.$email->header->uid.' TO '.$conf->global->DOLISTOREXTRACT_IMAP_FOLDER_ERROR;
+							$this->logCat.='<br/>Erreur move message '.$email->header->uid.' TO ' . getDolGlobalString('DOLISTOREXTRACT_IMAP_FOLDER_ERROR');
 						}
 					}
 				}
@@ -350,7 +350,7 @@ class ActionsDolistorextract
 		}
 
 
-		if(empty($conf->global->DOLISTOREXTRACT_DISABLE_SEND_THANK_YOU)){
+		if(!getDolGlobalString('DOLISTOREXTRACT_DISABLE_SEND_THANK_YOU')){
 			$this->logCat.='<hr/><stong>'.$langs->trans('EMailSentForNElements',$mailSent).'</strong>';
 		}
 
@@ -529,15 +529,15 @@ class ActionsDolistorextract
 					 *  Send mail
 					 */
 
-					if(!empty($conf->global->DOLISTOREXTRACT_DISABLE_SEND_THANK_YOU)){
+					if(getDolGlobalString('DOLISTOREXTRACT_DISABLE_SEND_THANK_YOU')){
 						$mailSent++;
 					}
-					elseif ($mailToSend && empty($conf->global->DOLISTOREXTRACT_DISABLE_SEND_THANK_YOU)) {
+					elseif ($mailToSend && !getDolGlobalString('DOLISTOREXTRACT_DISABLE_SEND_THANK_YOU')) {
 						require_once DOL_DOCUMENT_ROOT.'/core/class/CMailFile.class.php';
 						require_once DOL_DOCUMENT_ROOT.'/core/class/html.formmail.class.php';
 						$formMail = new FormMail($this->db);
 
-						$from = $conf->global->MAIN_INFO_SOCIETE_NOM .' <dolistore@atm-consulting.fr>';
+						$from = getDolGlobalString('MAIN_INFO_SOCIETE_NOM') . ' <dolistore@atm-consulting.fr>';
 						$sendto = $dolistoreMail->email;
 						$sendtocc = '';
 						$sendtobcc = '';
