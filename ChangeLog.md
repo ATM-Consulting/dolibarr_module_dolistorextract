@@ -1,5 +1,9 @@
 # Change log for DolistoreExtract
 
+## 1.3
+
+- NEW : compatibility v13 to v19 and php8 - 1.3 - *07/03/2024*
+
 ## 1.2
 - FIX : changement de champ pour les prospects importés - 1.2.11 - *06/07/2023*
 - FIX : tâche cron dolistorextract => fix gestion des erreurs - 1.2.10 - *28/03/2023*
