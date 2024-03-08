@@ -2,7 +2,8 @@
 
 ## 1.3
 
-- NEW : compatibility v13 to v19 and php8 - 1.3 - *07/03/2024*
+- NEW : compatibility to v19 and php8 - 1.3 - *07/03/2024*
+  Attention perte compatibilité inférieure V19
 
 ## 1.2
 - FIX : changement de champ pour les prospects importés - 1.2.11 - *06/07/2023*
