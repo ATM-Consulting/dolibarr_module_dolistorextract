@@ -53,7 +53,7 @@ class modDolistorextract extends DolibarrModules
 
 		// Family can be 'crm','financial','hr','projects','products','ecm','technic','interface','other'
 		// It is used to group modules by family in module setup page
-		$this->family = "other";
+		$this->family = "ATM Consulting";
 		// Module position in the family
 		$this->module_position = 500;
 		// Gives the possibility to the module, to provide his own family info and position of this family (Overwrite $this->family and $this->module_position. Avoid this)
@@ -64,11 +64,11 @@ class modDolistorextract extends DolibarrModules
 		// Module description, used if translation string 'ModuleXXXDesc' not found (where XXX is value of numeric property 'numero' of module)
 		$this->description = "Description of module Dolistorextract";
 		$this->descriptionlong = "A very long description. Can be a full HTML content";
-		$this->editor_name = 'Editor name';
+		$this->editor_name = 'ATM Consulting';
 		$this->editor_url = 'https://www.dolibarr.org';
 
 		// Possible values for version are: 'development', 'experimental', 'dolibarr', 'dolibarr_deprecated' or a version string like 'x.y.z'
-		$this->version = '1.2.11';
+		$this->version = '1.3.0';
 		// Key used in llx_const table to save module status enabled/disabled (where MYMODULE is value of property name of module in uppercase)
 		$this->const_name = 'MAIN_MODULE_'.strtoupper($this->name);
 		// Name of image file used for this module.
@@ -111,8 +111,8 @@ class modDolistorextract extends DolibarrModules
 		$this->depends = array();		// List of module class names as string that must be enabled if this module is enabled
 		$this->requiredby = array();	// List of module ids to disable if this one is disabled
 		$this->conflictwith = array();	// List of module class names as string this module is in conflict with
-		$this->phpmin = array(5,0);					// Minimum version of PHP required by module
-		$this->need_dolibarr_version = array(3,0);	// Minimum version of Dolibarr required by module
+		$this->phpmin = array(8,0);					// Minimum version of PHP required by module
+		$this->need_dolibarr_version = array(19,0);	// Minimum version of Dolibarr required by module
 		$this->langfiles = array("dolistorextract@dolistorextract");
 
 		// Constants
