@@ -188,21 +188,7 @@ if ($action == 'read') {
 		print "Erreur recherche client";
 	
 	} else {
-        if(floatval(DOL_VERSION) <= 8.0) {
-            // Customer found
-            if(count($searchSoc) > 0) {
-                $socid = $searchSoc[0]->id;
-                $socStatic->fetch($socid);
-
-                print 'Client trouvé : '.$socStatic->getNomUrl(1).'<br />';
-            }
-            else {
-                print '<strong>Client non trouvé!</strong><br />';
-            }
-        }
-        else {
-            print 'Client trouvé : '.$socStatic->getNomUrl(1).'<br />';
-        }
+		print 'Client trouvé : '.$socStatic->getNomUrl(1).'<br />';
 	}
 	$listProduct = array();
 	// Category management

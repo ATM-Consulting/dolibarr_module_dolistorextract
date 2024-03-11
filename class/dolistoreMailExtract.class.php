@@ -101,14 +101,18 @@ class dolistoreMailExtract
 		$datas = $xml->xpath('//table[@class="table table-recap"]/tbody/tr[@class="item_data"]');
 		$i=0;
 
+		// print "<p>List to search is " . json_encode($confDolExtract->arrayExtractTagsProduct) . "</p>";
+
 		// tr
 		foreach ($datas as $row)
 		{
+// print "<p>row is " . json_encode($row) . "</p>";
 			$extractProducts[$i] = array();
 			// Cells
 			foreach( $row as $cell) {
 				if ($cell->span) {
 					$attribute = (string) $cell->span->attributes()->class;
+					// print "<p>attribute is " . json_encode($attribute) . "</p>";
 					if (in_array($attribute, $confDolExtract->arrayExtractTagsProduct)) {
 						$extractProducts[$i][$attribute] = (string) $cell->span;
 					}
@@ -118,13 +122,17 @@ class dolistoreMailExtract
 			}
 			++$i;
 		}
-		foreach($extractProducts as $key => &$lineprod) {
-			$ref = $lineprod["item_reference"];
-			// Test if module is our. Else we unset the line
-			if(!preg_match("/^c458/", $ref)) {
-				unset($extractProducts[$key]);
-			}
-		}
+		//specif ATM : filtrage sur leur code produit
+		// foreach($extractProducts as $key => &$lineprod) {
+		// 	$ref = $lineprod["item_reference"];
+		// 	// Test if module is our. Else we unset the line
+		// 	if(!preg_match("/^c458/", $ref)) {
+		// 		unset($extractProducts[$key]);
+		// 	}
+		// }
+ 
+		// print "<p>Extrat result is " . json_encode($extractProducts) . "</p>";
+
 		return $extractProducts;
 	}
 
