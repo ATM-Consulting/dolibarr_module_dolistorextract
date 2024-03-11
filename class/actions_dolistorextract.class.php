@@ -516,6 +516,13 @@ class ActionsDolistorextract
 							// Event creation
 							$result = $dolistorextractActions->createEventFromExtractDatas($product, $dolistoreMail->order_name, $socid);
 
+							//CAP-REL: Ajout dans l'historique des ventes indirectes
+							if (isModEnabled("indirectcustomers")) {
+								dol_include_once('/indirectcustomers/class/saleshistory.class.php');
+								$sh = new SalesHistory($this->db);
+								$sh->addNew($socid, $product['item_name'], $product['item_price'], $product['item_reference'], $product['item_quantity'], 'SRC_DOLISTORE', 'DOLISTORE');
+							}
+
 							if ($result > 0) {
 								$mailToSend = true;
 							}else if ($result == 0) {
