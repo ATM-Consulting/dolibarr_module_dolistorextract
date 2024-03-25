@@ -239,13 +239,14 @@ print '<input type="hidden" name="token" value="'.$_SESSION['newtoken'].'">';
 print '<input type="hidden" name="action" value="update">';
 print '<input type="hidden" name="constname" value="DOLISTOREXTRACT_USER_FOR_ACTIONS">';
 print '<tr '.$bc[$var].'><td>'.$langs->trans("DolistorExtractUserForActions").'</td><td>';
-print $form->select_dolusers($conf->global->DOLISTOREXTRACT_USER_FOR_ACTIONS, 'constvalue');
+print $form->select_dolusers(getDolGlobalInt('DOLISTOREXTRACT_USER_FOR_ACTIONS'), 'constvalue');
 print '</td><td align="center" width="80">';
 print '<input type="submit" class="button" value="'.$langs->trans("Update").'" name="Button">';
 print "</td></tr>\n";
 print '</form>';
 
 // Search email template
+$arrayTemplates = array();
 $ret = $formmail->fetchAllEMailTemplate('dolistore_extract', $user, $langs);
 if ($ret > 0) {
 	foreach ($formmail->lines_model as $modelEmail) {
@@ -260,7 +261,7 @@ print '<input type="hidden" name="token" value="'.$_SESSION['newtoken'].'">';
 print '<input type="hidden" name="action" value="update">';
 print '<input type="hidden" name="constname" value="DOLISTOREXTRACT_EMAIL_TEMPLATE_FR">';
 print '<tr '.$bc[$var].'><td>'.$langs->trans("DolistorExtractEmailTemplateFr").'</td><td>';
-print $form->selectarray('constvalue', $arrayTemplates, $conf->global->DOLISTOREXTRACT_EMAIL_TEMPLATE_FR);
+print $form->selectarray('constvalue', $arrayTemplates, getDolGlobalString('DOLISTOREXTRACT_EMAIL_TEMPLATE_FR'));
 print '</td><td align="center" width="80">';
 print '<input type="submit" class="button" value="'.$langs->trans("Update").'" name="Button">';
 print "</td></tr>\n";
@@ -273,7 +274,7 @@ print '<input type="hidden" name="token" value="'.$_SESSION['newtoken'].'">';
 print '<input type="hidden" name="action" value="update">';
 print '<input type="hidden" name="constname" value="DOLISTOREXTRACT_EMAIL_TEMPLATE_EN">';
 print '<tr '.$bc[$var].'><td>'.$langs->trans("DolistorExtractEmailTemplateEn").'</td><td>';
-print $form->selectarray('constvalue', $arrayTemplates, $conf->global->DOLISTOREXTRACT_EMAIL_TEMPLATE_EN);
+print $form->selectarray('constvalue', $arrayTemplates, getDolGlobalString('DOLISTOREXTRACT_EMAIL_TEMPLATE_EN'));
 print '</td><td align="center" width="80">';
 print '<input type="submit" class="button" value="'.$langs->trans("Update").'" name="Button">';
 print "</td></tr>\n";

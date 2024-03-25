@@ -60,15 +60,15 @@ class modDolistorextract extends DolibarrModules
 		//$this->familyinfo = array('myownfamily' => array('position' => '001', 'label' => $langs->trans("MyOwnFamily")));
 
 		// Module label (no space allowed), used if translation string 'ModuleXXXName' not found (where XXX is value of numeric property 'numero' of module)
-		$this->name = preg_replace('/^mod/i','',get_class($this));
+		$this->name = 'Dolistore extract';
 		// Module description, used if translation string 'ModuleXXXDesc' not found (where XXX is value of numeric property 'numero' of module)
-		$this->description = "Description of module Dolistorextract";
-		$this->descriptionlong = "A very long description. Can be a full HTML content";
+		$this->description = "Module d'extraction des ventes Dolistore des Modules";
+		$this->descriptionlong = "";
 		$this->editor_name = 'ATM Consulting';
-		$this->editor_url = 'https://www.dolibarr.org';
+		$this->editor_url = 'https://www.atm-consulting.fr';
 
 		// Possible values for version are: 'development', 'experimental', 'dolibarr', 'dolibarr_deprecated' or a version string like 'x.y.z'
-		$this->version = '1.3.0';
+		$this->version = '1.3.1';
 		// Key used in llx_const table to save module status enabled/disabled (where MYMODULE is value of property name of module in uppercase)
 		$this->const_name = 'MAIN_MODULE_'.strtoupper($this->name);
 		// Name of image file used for this module.
