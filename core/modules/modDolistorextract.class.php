@@ -93,7 +93,7 @@ class modDolistorextract extends DolibarrModules
 	 	//							'js' => array('/dolistorextract/js/dolistorextract.js'),          // Set this to relative path of js file if module must load a js on all pages
 		//							'hooks' => array('hookcontext1','hookcontext2',...) // Set here all hooks context managed by module. You can also set hook context 'all'
 		//							'dir' => array('output' => 'othermodulename'),      // To force the default directories names
-		//							'workflow' => array('WORKFLOW_MODULE1_YOURACTIONTYPE_MODULE2'=>array('enabled'=>'! empty($conf->module1->enabled) && ! empty($conf->module2->enabled)', 'picto'=>'yourpicto@dolistorextract')) // Set here all workflow context managed by module
+		//							'workflow' => array('WORKFLOW_MODULE1_YOURACTIONTYPE_MODULE2'=>array('enabled'=>'isModEnabled('module1') && isModEnabled('module2')', 'picto'=>'yourpicto@dolistorextract')) // Set here all workflow context managed by module
 		//                        );
 		$this->module_parts = array(
 				'hooks' => array('admin','emailtemplates')
@@ -123,8 +123,8 @@ class modDolistorextract extends DolibarrModules
 		$this->const = array();
 
 		// Array to add new pages in new tabs
-		// Example: $this->tabs = array('objecttype:+tabname1:Title1:mylangfile@dolistorextract:$user->rights->dolistorextract->read:/dolistorextract/mynewtab1.php?id=__ID__',  					// To add a new tab identified by code tabname1
-        //                              'objecttype:+tabname2:SUBSTITUTION_Title2:mylangfile@dolistorextract:$user->rights->othermodule->read:/dolistorextract/mynewtab2.php?id=__ID__',  	// To add another new tab identified by code tabname2. Label will be result of calling all substitution functions on 'Title2' key.
+		// Example: $this->tabs = array('objecttype:+tabname1:Title1:mylangfile@dolistorextract:$user->hasRight('dolistorextract', 'read'):/dolistorextract/mynewtab1.php?id=__ID__',  					// To add a new tab identified by code tabname1
+        //                              'objecttype:+tabname2:SUBSTITUTION_Title2:mylangfile@dolistorextract:$user->hasRight('othermodule', 'read'):/dolistorextract/mynewtab2.php?id=__ID__',  	// To add another new tab identified by code tabname2. Label will be result of calling all substitution functions on 'Title2' key.
         //                              'objecttype:-tabname:NU:conditiontoremove');                                                     										// To remove an existing tab identified by code tabname
 		// where objecttype can be
 		// 'categories_x'	  to add a tab in category view (replace 'x' by type of category (0=product, 1=supplier, 2=customer, 3=member)
@@ -148,7 +148,7 @@ class modDolistorextract extends DolibarrModules
 		// 'user'             to add a tab in user view
         $this->tabs = array();
 
-		if (! isset($conf->dolistorextract) || ! isset($conf->dolistorextract->enabled))
+		if (! isset($conf->dolistorextract) || ! isModEnabled('dolistorextract'))
         {
         	$conf->dolistorextract=new stdClass();
         	$conf->dolistorextract->enabled=0;
@@ -167,7 +167,7 @@ class modDolistorextract extends DolibarrModules
             'tabfieldvalue'=>array("code,label","code,label","code,label"),																				// List of fields (list of fields to edit a record)
             'tabfieldinsert'=>array("code,label","code,label","code,label"),																			// List of fields (list of fields for insert)
             'tabrowid'=>array("rowid","rowid","rowid"),																									// Name of columns with primary key (try to always name it 'rowid')
-            'tabcond'=>array($conf->dolistorextract->enabled,$conf->dolistorextract->enabled,$conf->dolistorextract->enabled)												// Condition to show each dictionary
+            'tabcond'=>array(isModEnabled('dolistorextract'),isModEnabled('dolistorextract'),isModEnabled('dolistorextract'))												// Condition to show each dictionary
         );
         */
 
@@ -195,15 +195,15 @@ class modDolistorextract extends DolibarrModules
 		// $this->rights[$r][0] = $this->numero + $r;	// Permission id (must not be already used)
 		// $this->rights[$r][1] = 'Permision label';	// Permission label
 		// $this->rights[$r][3] = 1; 					// Permission by default for new user (0/1)
-		// $this->rights[$r][4] = 'level1';				// In php code, permission will be checked by test if ($user->rights->permkey->level1->level2)
-		// $this->rights[$r][5] = 'level2';				// In php code, permission will be checked by test if ($user->rights->permkey->level1->level2)
+		// $this->rights[$r][4] = 'level1';				// In php code, permission will be checked by test if ($user->hasRight('permkey', 'level1', 'level2'))
+		// $this->rights[$r][5] = 'level2';				// In php code, permission will be checked by test if ($user->hasRight('permkey', 'level1', 'level2'))
 		// $r++;
 
 		$this->rights[$r][0] = $this->numero + $r;	// Permission id (must not be already used)
 		$this->rights[$r][1] = 'Read dolistore message';	// Permission label
 		$this->rights[$r][3] = 0; 					// Permission by default for new user (0/1)
-		$this->rights[$r][4] = 'read';				// In php code, permission will be checked by test if ($user->rights->permkey->level1->level2)
-		//$this->rights[$r][5] = 'level2';				// In php code, permission will be checked by test if ($user->rights->permkey->level1->level2)
+		$this->rights[$r][4] = 'read';				// In php code, permission will be checked by test if ($user->hasRight('permkey', 'level1', 'level2'))
+		//$this->rights[$r][5] = 'level2';				// In php code, permission will be checked by test if ($user->hasRight('permkey', 'level1', 'level2'))
 
 		// Main menu entries
 		$this->menu = array();			// List of menus to add
@@ -220,8 +220,8 @@ class modDolistorextract extends DolibarrModules
 		//							'url'=>'/dolistorextract/pagetop.php',
 		//							'langs'=>'mylangfile@dolistorextract',	        // Lang file to use (without .lang) by module. File must be in langs/code_CODE/ directory.
 		//							'position'=>100,
-		//							'enabled'=>'$conf->dolistorextract->enabled',	// Define condition to show or hide menu entry. Use '$conf->dolistorextract->enabled' if entry must be visible if module is enabled.
-		//							'perms'=>'1',			                // Use 'perms'=>'$user->rights->dolistorextract->level1->level2' if you want your menu with a permission rules
+		//							'enabled'=>'isModEnabled('dolistorextract')',	// Define condition to show or hide menu entry. Use 'isModEnabled('dolistorextract')' if entry must be visible if module is enabled.
+		//							'perms'=>'1',			                // Use 'perms'=>'$user->hasRight('dolistorextract', 'level1', 'level2')' if you want your menu with a permission rules
 		//							'target'=>'',
 		//							'user'=>2);				                // 0=Menu for internal users, 1=external users, 2=both
 		// $r++;
@@ -235,8 +235,8 @@ class modDolistorextract extends DolibarrModules
 		//							'url'=>'/dolistorextract/pagelevel2.php',
 		//							'langs'=>'mylangfile@dolistorextract',	        // Lang file to use (without .lang) by module. File must be in langs/code_CODE/ directory.
 		//							'position'=>100,
-		//							'enabled'=>'$conf->dolistorextract->enabled',  // Define condition to show or hide menu entry. Use '$conf->dolistorextract->enabled' if entry must be visible if module is enabled. Use '$leftmenu==\'system\'' to show if leftmenu system is selected.
-		//							'perms'=>'1',			                // Use 'perms'=>'$user->rights->dolistorextract->level1->level2' if you want your menu with a permission rules
+		//							'enabled'=>'isModEnabled('dolistorextract')',  // Define condition to show or hide menu entry. Use 'isModEnabled('dolistorextract')' if entry must be visible if module is enabled. Use '$leftmenu==\'system\'' to show if leftmenu system is selected.
+		//							'perms'=>'1',			                // Use 'perms'=>'$user->hasRight('dolistorextract', 'level1', 'level2')' if you want your menu with a permission rules
 		//							'target'=>'',
 		//							'user'=>2);				                // 0=Menu for internal users, 1=external users, 2=both
 		// $r++;
@@ -249,8 +249,8 @@ class modDolistorextract extends DolibarrModules
 								'url'=>'/dolistorextract/mails.php',
 								'langs'=>'dolistorextract@dolistorextract',	        // Lang file to use (without .lang) by module. File must be in langs/code_CODE/ directory.
 								'position'=>100,
-								'enabled'=>'$conf->dolistorextract->enabled',  // Define condition to show or hide menu entry. Use '$conf->dolistorextract->enabled' if entry must be visible if module is enabled. Use '$leftmenu==\'system\'' to show if leftmenu system is selected.
-								'perms'=>'$user->rights->dolistorextract->read',			                // Use 'perms'=>'$user->rights->dolistorextract->level1->level2' if you want your menu with a permission rules
+								'enabled'=>'isModEnabled('dolistorextract')',  // Define condition to show or hide menu entry. Use 'isModEnabled('dolistorextract')' if entry must be visible if module is enabled. Use '$leftmenu==\'system\'' to show if leftmenu system is selected.
+								'perms'=>'$user->hasRight('dolistorextract', 'read')',			                // Use 'perms'=>'$user->hasRight('dolistorextract', 'level1', 'level2')' if you want your menu with a permission rules
 								'target'=>'',
 								'user'=>0);
 
