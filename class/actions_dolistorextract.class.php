@@ -632,20 +632,20 @@ class ActionsDolistorextract extends CommonHookActions
 			$webSales->import_key = date('Ymd');  // Generate import key with current date
 			$webSales->fk_webmodule = $fk_webmodule;
 			$webSales->date_sale = $TItemDatas['date_sale'] ?? dol_now() ;  // Current date for the sale
-			$webSales->status = Webmodulesales::STATUS_SOLD;
+			$webSales->status = !empty($TItemDatas['item_refunded']) ? WebModuleSales::STATUS_REFUNDED : Webmodulesales::STATUS_SOLD;
 
 			// Create the sale and check the result
 			$res = $webSales->create($user);
 			if ($res <= 0) {
 				// If creation fails, log the error and add it to the error array
-				$this->logError('Unable to create web sale: ' . $webSales->error);
+				$this->logError('Unable to create web sale: ' . $webSales->error. ' '.implode(' - ', $webSales->errors));
 			}
 
 			// Return the ID of the created sale if successful
 			return $res;
 		}
 		// If no web module is found, log the error and add it to the error array
-		$this->logError('No web module found for fk_dolistore=' . ($TItemDatas['item_reference'] ?? ''));
+		$this->logError('No web module found for fk_dolistore=' . ($TItemDatas['item_reference'] . ' '.  $TItemDatas['item_name']));
 
 
 		// Return 0 if no web module was found
@@ -689,6 +689,9 @@ class ActionsDolistorextract extends CommonHookActions
 	 * @return float The converted float value (e.g., 2356156.00).
 	 */
 	public function convertToFloat(string $formattedString): float {
+		//Espace insécable
+		$formattedString = str_replace("\xC2\xA0", " ", $formattedString);  // Remplace les espaces insécables par des espaces réguliers
+
 		// Step 1: Validate the input (checks if the string contains digits, commas, and potentially a currency symbol)
 		if (! preg_match('/^[\d\s,.€]+$/', $formattedString)) {
 			$this->logError('Invalid number format: ' . $formattedString);
