@@ -39,6 +39,7 @@ class ActionsDolistorextract extends CommonHookActions
 	public $dao;
 	public $mesg;
 	public $error;
+	public $nbErrors;
 	public $errors = array();
 	//! Numero de l'erreur
 	public $errno = 0;
@@ -273,7 +274,7 @@ class ActionsDolistorextract extends CommonHookActions
 	{
 		global $langs, $conf;
 
-
+		$this->nbErrors = 0;
 		$langs->load('main');
 
 		$mailbox = $conf->global->DOLISTOREXTRACT_IMAP_SERVER;
@@ -353,7 +354,7 @@ class ActionsDolistorextract extends CommonHookActions
 		if(!getDolGlobalString('DOLISTOREXTRACT_DISABLE_SEND_THANK_YOU')){
 			$this->logCat.='<hr/><stong>'.$langs->trans('EMailSentForNElements',$mailSent).'</strong>';
 		}
-
+		if(!empty($this->nbErrors)) return -1;
 		return $mailSent;
 
 	}
@@ -596,8 +597,8 @@ class ActionsDolistorextract extends CommonHookActions
 			++$error;
 			array_push($this->errors, 'No data for email '.$email->header->uid);
 		}
-
 		if ($error) {
+			$this->nbErrors += $error;
 			return -1 * $error;
 		} else {
 			return $mailSent;

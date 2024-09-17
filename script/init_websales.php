@@ -5,7 +5,7 @@ if (!$res) {
 	$res = @include '../../../main.inc.php';  // Si le premier chemin échoue, on essaie avec un autre répertoire relatif (custom ou extension)
 }
 require_once __DIR__.'/../class/actions_dolistorextract.class.php';
-
+set_time_limit(0);
 // Initialisation de l'objet pour gérer les actions liées à Dolistore
 $actionsDolistore = new ActionsDolistorextract($db);
 
@@ -63,6 +63,11 @@ if (isset($_FILES['importfile']) && $_FILES['importfile']['error'] == UPLOAD_ERR
 				// Exécution de la requête SQL pour récupérer l'ID de la société basée sur l'email
 				$sql = 'SELECT s.rowid FROM '.$db->prefix().'societe s WHERE email = "'.$db->escape($row[3]).'"';
 				$resql = $db->query($sql);
+				//On vérifie s'il y a pas un contact avec cette adresse mail si on ne trouve pas la société
+				if($resql && $db->num_rows($resql) == 0) {
+					$sql = 'SELECT s.fk_soc as rowid FROM ' . $db->prefix() . 'socpeople s WHERE email = "' . $db->escape($row[3]) . '"';
+					$resql = $db->query($sql);
+				}
 
 				if (!($resql && $db->num_rows($resql) > 0)) {
 					// Si la société n'est pas trouvée, incrémenter l'erreur et afficher un message d'erreur
