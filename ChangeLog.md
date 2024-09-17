@@ -4,6 +4,9 @@
 
 
 
+## Release 1.4
+- NEW : Ajout de la gestion de l'onglet vente d'un module + Script init onglet vente module - 1.4.0 - *17/09/2024*
+
 ## Release 1.3
 
 - FIX : Warning PHP 8.2 - 1.3.1 - *25/03/2024*
