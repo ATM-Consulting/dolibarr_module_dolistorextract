@@ -68,3 +68,5 @@ FileProcessedSuccessfully = Fichier importé avec succès
 RollbackCauseOfErrors=On annule l'import car il y a des erreurs : %s
 FailedToInsertDataFor=Impossible d'ajouter la donnée websale pour ref dolistore %s
 InvalidFileType=Le type de fichier attendu est CSV
+GenericDomainFoundFor=Société non trouvé & domaine de l'adresse mail générique %s
+ManyThirdpartiesFound=Plusieurs sociétés trouvés pour l'adresse mail %s
