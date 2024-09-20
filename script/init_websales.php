@@ -81,7 +81,7 @@ if (isset($_FILES['importfile']) && $_FILES['importfile']['error'] == UPLOAD_ERR
 						}
 
 						// Recherche par domaine d'email dans les sociétés
-						$sql = 'SELECT s.rowid FROM ' . $db->prefix() . 'societe s WHERE s.email LIKE "%@' . $domain . '%"';
+						$sql = 'SELECT s.rowid FROM ' . $db->prefix() . 'societe as s WHERE s.email LIKE "%@' . $domain . '%"';
 						$resql = $db->query($sql);
 						if ($resql) {
 							// Si plusieurs sociétés sont trouvées, on affiche un message d'erreur
