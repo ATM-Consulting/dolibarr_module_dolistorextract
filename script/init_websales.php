@@ -66,7 +66,7 @@ if (isset($_FILES['importfile']) && $_FILES['importfile']['error'] == UPLOAD_ERR
 				//On vérifie s'il y a pas un contact avec cette adresse mail si on ne trouve pas la société
 				if ($resql && $db->num_rows($resql) == 0) {
 					// Recherche d'un contact ayant cet email
-					$sql = 'SELECT s.fk_soc as rowid FROM ' . $db->prefix() . 'socpeople s WHERE email = "' . $db->escape($row[3]) . '"';
+					$sql = 'SELECT s.fk_soc as rowid FROM ' . $db->prefix() . 'socpeople as s WHERE email = "' . $db->escape($row[3]) . '"';
 					$resql = $db->query($sql);
 					// Si aucun contact n'est trouvé, on procède à une recherche par domaine
 					if ($resql && $db->num_rows($resql) == 0) {
