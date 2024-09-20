@@ -92,7 +92,7 @@ if (isset($_FILES['importfile']) && $_FILES['importfile']['error'] == UPLOAD_ERR
 								// Si aucune société n'est trouvée, on recherche dans les contacts
 							} else if ($db->num_rows($resql) == 0) {
 								// Si plusieurs sociétés sont trouvés, on affiche un message d'erreur
-								$sql = 'SELECT DISTINCT s.fk_soc as rowid FROM ' . $db->prefix() . 'socpeople s WHERE s.email LIKE "%@' . $domain . '%"';
+								$sql = 'SELECT DISTINCT s.fk_soc as rowid FROM ' . $db->prefix() . 'socpeople as s WHERE s.email LIKE "%@' . $domain . '%"';
 								$resql = $db->query($sql);
 								if ($resql && $db->num_rows($resql) > 1) {
 									$error++;
