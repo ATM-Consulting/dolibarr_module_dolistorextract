@@ -61,7 +61,7 @@ if (isset($_FILES['importfile']) && $_FILES['importfile']['error'] == UPLOAD_ERR
 				}
 
 				// Exécution de la requête SQL pour récupérer l'ID de la société basée sur l'email
-				$sql = 'SELECT s.rowid FROM ' . $db->prefix() . 'societe s WHERE email = "' . $db->escape($row[3]) . '"';
+				$sql = 'SELECT s.rowid FROM ' . $db->prefix() . 'societe as s WHERE email = "' . $db->escape($row[3]) . '"';
 				$resql = $db->query($sql);
 				//On vérifie s'il y a pas un contact avec cette adresse mail si on ne trouve pas la société
 				if ($resql && $db->num_rows($resql) == 0) {
