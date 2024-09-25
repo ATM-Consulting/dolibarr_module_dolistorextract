@@ -61,12 +61,12 @@ if (isset($_FILES['importfile']) && $_FILES['importfile']['error'] == UPLOAD_ERR
 					$TItemDatas['item_refunded'] = 1;
 				}
 				// Exécution de la requête SQL pour récupérer l'ID de la société basée sur l'email
-				$sql = 'SELECT s.rowid FROM ' . $db->prefix() . 'societe s WHERE email = "' . $db->escape($row[3]) . '"';
+				$sql = 'SELECT s.rowid FROM ' . $db->prefix() . 'societe as s WHERE email = "' . $db->escape($row[3]) . '"';
 				$resql = $db->query($sql);
 				//On vérifie s'il y a pas un contact avec cette adresse mail si on ne trouve pas la société
 				if ($resql && $db->num_rows($resql) == 0) {
 					// Recherche d'un contact ayant cet email
-					$sql = 'SELECT s.fk_soc as rowid FROM ' . $db->prefix() . 'socpeople s WHERE email = "' . $db->escape($row[3]) . '"';
+					$sql = 'SELECT s.fk_soc as rowid FROM ' . $db->prefix() . 'socpeople as s WHERE email = "' . $db->escape($row[3]) . '"';
 					$resql = $db->query($sql);
 					// Si aucun contact n'est trouvé, on procède à une recherche par domaine
 					if ($resql && $db->num_rows($resql) == 0) {
@@ -82,7 +82,7 @@ if (isset($_FILES['importfile']) && $_FILES['importfile']['error'] == UPLOAD_ERR
 						}
 
 						// Recherche par domaine d'email dans les sociétés
-						$sql = 'SELECT s.rowid FROM ' . $db->prefix() . 'societe s WHERE s.email LIKE "%@' . $domain . '%"';
+						$sql = 'SELECT s.rowid FROM ' . $db->prefix() . 'societe as s WHERE s.email LIKE "%@' . $domain . '%"';
 						$resql = $db->query($sql);
 						if ($resql) {
 							// Si plusieurs sociétés sont trouvées, on affiche un message d'erreur
@@ -94,7 +94,7 @@ if (isset($_FILES['importfile']) && $_FILES['importfile']['error'] == UPLOAD_ERR
 								// Si aucune société n'est trouvée, on recherche dans les contacts
 							} else if ($db->num_rows($resql) == 0 && empty($fk_company)) {
 								// Si plusieurs sociétés sont trouvés, on affiche un message d'erreur
-								$sql = 'SELECT DISTINCT s.fk_soc as rowid FROM ' . $db->prefix() . 'socpeople s WHERE s.email LIKE "%@' . $domain . '%"';
+								$sql = 'SELECT DISTINCT s.fk_soc as rowid FROM ' . $db->prefix() . 'socpeople as s WHERE s.email LIKE "%@' . $domain . '%"';
 								$resql = $db->query($sql);
 								if ($resql && $db->num_rows($resql) > 1) {
 									$error++;
