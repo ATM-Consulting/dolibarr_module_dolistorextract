@@ -5,6 +5,7 @@
 
 
 ## Release 1.4
+- FIX : Select user pour import init websale + ajout des dates d'achats dans msg d'erreurs - 1.4.1 - *25/09/2024*
 - NEW : Ajout de la gestion de l'onglet vente d'un module + Script init onglet vente module - 1.4.0 - *17/09/2024*
 
 ## Release 1.3

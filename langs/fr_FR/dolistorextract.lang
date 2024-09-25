@@ -70,3 +70,4 @@ FailedToInsertDataFor=Impossible d'ajouter la donnée websale pour ref dolistore
 InvalidFileType=Le type de fichier attendu est CSV
 GenericDomainFoundFor=Société non trouvé & domaine de l'adresse mail générique %s
 ManyThirdpartiesFound=Plusieurs sociétés trouvés pour l'adresse mail %s
+SelectCompanyInitWebsale=Choisir le tiers qui sera utilisé si aucune société n'est trouvée (si non défini, déclenchera des erreurs et donc rollback de tout l'import)

@@ -1,20 +1,19 @@
 <?php
 // Chargement de l'environnement Dolibarr
 $res = @include '../../main.inc.php';  // Importation principale de l'environnement Dolibarr
-if (!$res) {
+if (! $res) {
 	$res = @include '../../../main.inc.php';  // Si le premier chemin échoue, on essaie avec un autre répertoire relatif (custom ou extension)
 }
-require_once __DIR__.'/../class/actions_dolistorextract.class.php';
+require_once __DIR__ . '/../class/actions_dolistorextract.class.php';
 set_time_limit(0);
 // Initialisation de l'objet pour gérer les actions liées à Dolistore
 $actionsDolistore = new ActionsDolistorextract($db);
-
+$form = new Form($db);
 // Initialisation de la langue pour l'interface utilisateur
 $langs->load("dolistorextract@dolistorextract");
 
 // Affichage de l'en-tête
 llxHeader('', $langs->transnoentitiesnoconv("ImportCSVData"));
-
 
 $error = 0; // Initialisation du compteur d'erreurs
 
@@ -31,6 +30,8 @@ if (isset($_FILES['importfile']) && $_FILES['importfile']['error'] == UPLOAD_ERR
 	// Vérification de l'extension du fichier
 	$allowedExtensions = ['csv'];
 	$fileExtension = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
+
+	$fk_company = GETPOST('select_company', 'int');
 
 	if (in_array($fileExtension, $allowedExtensions)) {
 		// Ouverture du fichier CSV
@@ -59,7 +60,6 @@ if (isset($_FILES['importfile']) && $_FILES['importfile']['error'] == UPLOAD_ERR
 					$TItemDatas['item_price'] = 0;
 					$TItemDatas['item_refunded'] = 1;
 				}
-
 				// Exécution de la requête SQL pour récupérer l'ID de la société basée sur l'email
 				$sql = 'SELECT s.rowid FROM ' . $db->prefix() . 'societe s WHERE email = "' . $db->escape($row[3]) . '"';
 				$resql = $db->query($sql);
@@ -73,10 +73,11 @@ if (isset($_FILES['importfile']) && $_FILES['importfile']['error'] == UPLOAD_ERR
 						// Extraction du domaine à partir de l'email
 						$domain = getDomainFromEmail($row[3]);
 
-						if (isGenericDomain($domain)) {
+						if (isGenericDomain($domain) && empty($fk_company)) {
 							// Ignorer les domaines génériques
+							//Si pas de tiers sélectionné on affiche l'erreur
 							$error++;
-							echo displayStyledMessage($langs->transnoentitiesnoconv("GenericDomainFoundFor", $row[3]), "error");
+							echo displayStyledMessage($langs->transnoentitiesnoconv("GenericDomainFoundFor", $row[3]) . ', ' . $row[5], "error");
 							continue;
 						}
 
@@ -85,59 +86,58 @@ if (isset($_FILES['importfile']) && $_FILES['importfile']['error'] == UPLOAD_ERR
 						$resql = $db->query($sql);
 						if ($resql) {
 							// Si plusieurs sociétés sont trouvées, on affiche un message d'erreur
-							if ($db->num_rows($resql) > 1) {
+							if ($db->num_rows($resql) > 1 && empty($fk_company)) {
 								$error++;
-								echo displayStyledMessage($langs->transnoentitiesnoconv("ManyThirdpartiesFound", $row[3]), "error");
+
+								echo displayStyledMessage($langs->transnoentitiesnoconv("ManyThirdpartiesFound", $row[3]).', '.$row[5], "error");
 								continue;
 								// Si aucune société n'est trouvée, on recherche dans les contacts
-							} else if ($db->num_rows($resql) == 0) {
+							} else if ($db->num_rows($resql) == 0 && empty($fk_company)) {
 								// Si plusieurs sociétés sont trouvés, on affiche un message d'erreur
 								$sql = 'SELECT DISTINCT s.fk_soc as rowid FROM ' . $db->prefix() . 'socpeople s WHERE s.email LIKE "%@' . $domain . '%"';
 								$resql = $db->query($sql);
 								if ($resql && $db->num_rows($resql) > 1) {
 									$error++;
-									echo displayStyledMessage($langs->transnoentitiesnoconv("ManyThirdpartiesFound", $row[3]), "error");
+									echo displayStyledMessage($langs->transnoentitiesnoconv("ManyThirdpartiesFound", $row[3]).', '.$row[5], "error");
 									continue;
 								}
 							}
 						}
 					}
 				}
-				
 
-				if (!($resql && $db->num_rows($resql) > 0)) {
+				if (! ($resql && $db->num_rows($resql) > 0) && empty($fk_company)) {
 					// Si la société n'est pas trouvée, incrémenter l'erreur et afficher un message d'erreur
 					$error++;
-					echo displayStyledMessage($langs->transnoentitiesnoconv("FailedToGetSocieteFor") . ' ' . $row[3], "error");
-
+					echo displayStyledMessage($langs->transnoentitiesnoconv("FailedToGetSocieteFor") . ' ' . $row[3].', '.$row[5], "error");
 				} else {
-					// Si la société est trouvée, récupérer son ID et insérer les données de vente
-					$obj = $db->fetch_object($resql);
-					$socid = $obj->rowid; // Récupération de l'ID de la société
+					if ($resql && $db->num_rows($resql) > 0) {
+						// Si la société est trouvée, récupérer son ID et insérer les données de vente
+						$obj = $db->fetch_object($resql);
+						$socid = $obj->rowid; // Récupération de l'ID de la société
+					} else $socid = $fk_company;
+
 					$result = $actionsDolistore->addWebmoduleSales($TItemDatas, $socid);
 
 					if ($result <= 0) {
 						// Si l'insertion échoue, incrémenter l'erreur et afficher un message d'erreur
 						$error++;
-						echo displayStyledMessage($langs->transnoentitiesnoconv("FailedToInsertDataFor") . ' ' . htmlspecialchars($TItemDatas['item_reference']) . $actionsDolistore->logCat, "error");
+						echo displayStyledMessage($langs->transnoentitiesnoconv("FailedToInsertDataFor") . ' ' . htmlspecialchars($TItemDatas['item_reference'])  . $actionsDolistore->logCat.', '.$row[5], "error");
 					}
 				}
 			}
 
 			// Fermer le fichier une fois le traitement terminé
 			fclose($handle);
-
 		} else {
 			// Affichage d'un message d'erreur si le fichier ne peut pas être ouvert
 			$error++;
 			echo displayStyledMessage($langs->transnoentitiesnoconv("FileProcessingError"), "error");
-
 		}
 	} else {
 		// Affichage d'un message d'erreur si le type de fichier n'est pas valide
 		$error++;
 		echo displayStyledMessage($langs->transnoentitiesnoconv("InvalidFileType"), "error");
-
 	}
 	if ($error > 0) {
 		echo displayStyledMessage($langs->transnoentitiesnoconv("RollbackCauseOfErrors", $error), "error");
@@ -150,7 +150,6 @@ if (isset($_FILES['importfile']) && $_FILES['importfile']['error'] == UPLOAD_ERR
 }
 
 // Si des erreurs sont détectées, afficher un message et annuler la transaction
-
 
 // Affichage du formulaire d'import
 echo '<div style="max-width: 800px; margin: 40px auto; padding: 30px; border: 1px solid #ddd; border-radius: 8px; background-color: #f9f9f9;">';
@@ -167,6 +166,14 @@ echo '<label for="importfile" style="font-weight: bold; display: block; margin-b
 echo '<input type="file" name="importfile" id="importfile" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 16px;" required>';
 echo '<input type="hidden" name="token" value="' . newToken() . '">';
 echo '</div>';
+// Encadré pour le champ de sélection d'entreprise
+echo '<div style="margin-bottom: 20px;">';
+echo '<label for="select_company" style="font-weight: bold; display: block; margin-bottom: 10px; color: #555;">' . $langs->transnoentitiesnoconv("SelectCompanyInitWebsale") . '</label>';
+echo '<div style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 16px;">';
+echo $form->select_company('', 'select_company', '', 1, 0, 0,  array(),  0, 'allwidth',  'style="width:100%"'); // Champ select d'entreprise
+echo '</div>';
+echo '</div>';
+
 echo '<div>';
 echo '<button type="submit" style="background-color: #007bff; color: white; border: none; padding: 12px 20px; font-size: 16px; border-radius: 4px; cursor: pointer; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">' . $langs->transnoentitiesnoconv("Import") . '</button>';
 echo '</div>';
@@ -190,8 +197,10 @@ function getDomainFromEmail(string $email): string {
 	$parts = explode('@', $email);
 	if (count($parts) == 2) {
 		$domain = explode('.', $parts[1]);
+
 		return $domain[0];
 	}
+
 	return '';
 }
 
@@ -209,6 +218,7 @@ function isGenericDomain(string $domain): bool {
 		'outlook365', 'mailinator', 'maildrop', 'temporary', 'discard', 'sharklasers', 'guerrillamail',
 		'10minutemail', 'trashmail', 'yopmail', 'fakeinbox', 'meltmail', 'temp-mail', 'laposte', 'me'
 	];
+
 	return in_array($domain, $genericDomains);
 }
 
@@ -227,4 +237,5 @@ function displayStyledMessage(string $message, string $type = 'error'): string {
 	return '<div style="color: ' . $color . '; background-color: ' . $background . '; border-color: ' . $border . '; padding: 10px; border-radius: 5px; margin-bottom: 15px;">'
 		. htmlspecialchars($message) . '</div>';
 }
+
 ?>
