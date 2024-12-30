@@ -309,6 +309,7 @@ class ActionsDolistorextract extends CommonHookActions
 			$this->logCat.= '<br/><strong class="error">Mail send disabled</strong>';
 		}
 
+		$orderSubjects = [];
 		/**
 		 * @var IncomingMessage[] $emails
 		 * @return negative value if KO, 0 and positive value is OK
@@ -319,12 +320,18 @@ class ActionsDolistorextract extends CommonHookActions
 
 			// Only mails from Dolistore and not seen
 			if (strpos($email->header->subject, 'DoliStore') > 0 && !$email->header->seen) {
-				$this->logCat.= '<br/>-> launch Import Process ';
-				$res = $this->launchImportProcess($email);
+				$isMailAlreadySent = in_array($email->header->subject, $orderSubjects);
+				if (!$isMailAlreadySent){
+					$this->logCat.= '<br/>-> launch Import Process ';
+					$res = $this->launchImportProcess($email);
+				} else $res = 1;
 
 				if ($res >= 0) {
-					$this->logCat.= '-> <stong>OK</stong>';
-					++$mailSent;
+					if (!$isMailAlreadySent){
+						$orderSubjects[]= $email->header->subject;
+						++$mailSent;
+						$this->logCat.= '-> <stong>OK</stong>';
+					}
 					// Mark email as read
 					$imap->setSeenMessage($email->header->msgno, true);
 					if(getDolGlobalString('DOLISTOREXTRACT_IMAP_FOLDER_ARCHIVE')) {
@@ -662,10 +669,10 @@ class ActionsDolistorextract extends CommonHookActions
 	public function getWebmoduleIdByDolistoreId(string $fk_dolistore): int {
 		// Build SQL query to get the web module ID
 		$sql = /** @lang SQL */
-			'SELECT DISTINCT w.rowid 
-            FROM ' . $this->db->prefix() . 'webmodule as w 
-                INNER JOIN ' . $this->db->prefix() . 'webmodule_version wv ON w.rowid = wv.fk_webmodule 
-                INNER JOIN ' . $this->db->prefix() . 'webmodule_version_extrafields wve ON wv.rowid = wve.fk_object 
+			'SELECT DISTINCT w.rowid
+            FROM ' . $this->db->prefix() . 'webmodule as w
+                INNER JOIN ' . $this->db->prefix() . 'webmodule_version wv ON w.rowid = wv.fk_webmodule
+                INNER JOIN ' . $this->db->prefix() . 'webmodule_version_extrafields wve ON wv.rowid = wve.fk_object
             WHERE wve.iddolistore = "' . $this->db->escape($fk_dolistore) . '"';
 
 		// Execute the query
