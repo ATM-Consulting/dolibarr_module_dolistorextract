@@ -71,7 +71,7 @@ $view       = GETPOST('view');
 if (empty($action) && empty($id) && empty($ref)) $action='view';
 
 // Protection if external user
-if ($user->societe_id > 0 || ! $user->rights->dolistorextract->read)
+if ($user->societe_id > 0 || ! $user->hasRight('dolistorextract', 'read'))
 {
 	accessforbidden();
 }

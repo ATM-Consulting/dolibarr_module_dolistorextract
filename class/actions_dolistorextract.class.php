@@ -33,12 +33,13 @@ use SSilence\ImapClient\ImapClient as Imap;
  *    \class      ActionsTicketsup
  *    \brief      Class Actions of the module dolistorextract
  */
-class ActionsDolistorextract
+class ActionsDolistorextract extends CommonHookActions
 {
 	public $db;
 	public $dao;
 	public $mesg;
 	public $error;
+	public $nbErrors;
 	public $errors = array();
 	//! Numero de l'erreur
 	public $errno = 0;
@@ -102,7 +103,7 @@ class ActionsDolistorextract
 			return -1;
 		}
 		// Load object modCodeTiers
-		$module=(! empty($conf->global->SOCIETE_CODECLIENT_ADDON)?$conf->global->SOCIETE_CODECLIENT_ADDON:'mod_codeclient_leopard');
+		$module=(getDolGlobalString('SOCIETE_CODECLIENT_ADDON')?getDolGlobalString('SOCIETE_CODECLIENT_ADDON'):'mod_codeclient_leopard');
 		if (substr($module, 0, 15) == 'mod_codeclient_' && substr($module, -3) == 'php')
 		{
 			$module = substr($module, 0, dol_strlen($module)-4);
@@ -273,7 +274,7 @@ class ActionsDolistorextract
 	{
 		global $langs, $conf;
 
-
+		$this->nbErrors = 0;
 		$langs->load('main');
 
 		$mailbox = $conf->global->DOLISTOREXTRACT_IMAP_SERVER;
@@ -295,7 +296,7 @@ class ActionsDolistorextract
 
 
 		// Select the folder Inbox
-		$imap->selectFolder(!empty($conf->global->DOLISTOREXTRACT_IMAP_FOLDER)?$conf->global->DOLISTOREXTRACT_IMAP_FOLDER:'INBOX');
+		$imap->selectFolder(getDolGlobalString('DOLISTOREXTRACT_IMAP_FOLDER')?getDolGlobalString('DOLISTOREXTRACT_IMAP_FOLDER'):'INBOX');
 
 		// Fetch all the messages in the current folder
 
@@ -304,10 +305,11 @@ class ActionsDolistorextract
 
 		$mailSent = 0;
 
-		if(!empty($conf->global->DOLISTOREXTRACT_DISABLE_SEND_THANK_YOU)){
+		if(getDolGlobalString('DOLISTOREXTRACT_DISABLE_SEND_THANK_YOU')){
 			$this->logCat.= '<br/><strong class="error">Mail send disabled</strong>';
 		}
 
+		$orderSubjects = [];
 		/**
 		 * @var IncomingMessage[] $emails
 		 * @return negative value if KO, 0 and positive value is OK
@@ -318,26 +320,32 @@ class ActionsDolistorextract
 
 			// Only mails from Dolistore and not seen
 			if (strpos($email->header->subject, 'DoliStore') > 0 && !$email->header->seen) {
-				$this->logCat.= '<br/>-> launch Import Process ';
-				$res = $this->launchImportProcess($email);
+				$isMailAlreadySent = in_array($email->header->subject, $orderSubjects);
+				if (!$isMailAlreadySent){
+					$this->logCat.= '<br/>-> launch Import Process ';
+					$res = $this->launchImportProcess($email);
+				} else $res = 1;
 
 				if ($res >= 0) {
-					$this->logCat.= '-> <stong>OK</stong>';
-					++$mailSent;
+					if (!$isMailAlreadySent){
+						$orderSubjects[]= $email->header->subject;
+						++$mailSent;
+						$this->logCat.= '-> <stong>OK</stong>';
+					}
 					// Mark email as read
 					$imap->setSeenMessage($email->header->msgno, true);
-					if(!empty($conf->global->DOLISTOREXTRACT_IMAP_FOLDER_ARCHIVE)) {
+					if(getDolGlobalString('DOLISTOREXTRACT_IMAP_FOLDER_ARCHIVE')) {
 						$resMov = $imap->moveMessage($email->header->uid, $conf->global->DOLISTOREXTRACT_IMAP_FOLDER_ARCHIVE);
 						if(!$resMov){
-							$this->logCat.='<br/>Erreur move message '.$email->header->uid.' TO '.$conf->global->DOLISTOREXTRACT_IMAP_FOLDER_ARCHIVE;
+							$this->logCat.='<br/>Erreur move message '.$email->header->uid.' TO ' . getDolGlobalString('DOLISTOREXTRACT_IMAP_FOLDER_ARCHIVE');
 						}
 					}
 				} else{
 					$this->logCat.= '-> <stong class="error">FAIL</stong>';
-					if(!empty($conf->global->DOLISTOREXTRACT_IMAP_FOLDER_ERROR)) {
+					if(getDolGlobalString('DOLISTOREXTRACT_IMAP_FOLDER_ERROR')) {
 						$resMov = $imap->moveMessage($email->header->uid, $conf->global->DOLISTOREXTRACT_IMAP_FOLDER_ERROR);
 						if(!$resMov){
-							$this->logCat.='<br/>Erreur move message '.$email->header->uid.' TO '.$conf->global->DOLISTOREXTRACT_IMAP_FOLDER_ERROR;
+							$this->logCat.='<br/>Erreur move message '.$email->header->uid.' TO ' . getDolGlobalString('DOLISTOREXTRACT_IMAP_FOLDER_ERROR');
 						}
 					}
 				}
@@ -350,10 +358,10 @@ class ActionsDolistorextract
 		}
 
 
-		if(empty($conf->global->DOLISTOREXTRACT_DISABLE_SEND_THANK_YOU)){
+		if(!getDolGlobalString('DOLISTOREXTRACT_DISABLE_SEND_THANK_YOU')){
 			$this->logCat.='<hr/><stong>'.$langs->trans('EMailSentForNElements',$mailSent).'</strong>';
 		}
-
+		if(!empty($this->nbErrors)) return -1;
 		return $mailSent;
 
 	}
@@ -364,7 +372,7 @@ class ActionsDolistorextract
 	 */
 	public function launchImportProcess($email) {
 
-		global $conf;
+		global $conf, $error;
 		dol_syslog(__METHOD__.' launch import process for message '.$email->header->uid, LOG_DEBUG);
 
 		$error = 0;
@@ -476,6 +484,9 @@ class ActionsDolistorextract
 
 					// Loop on each product
 					foreach ($dolistoreMail->items as $product) {
+
+						$this->addWebmoduleSales($product, $socid);
+
 					    // Save list of products for email message
 					    $listProduct[] = $product['item_name'];
 
@@ -547,15 +558,15 @@ class ActionsDolistorextract
 					 *  Send mail
 					 */
 
-					if(!empty($conf->global->DOLISTOREXTRACT_DISABLE_SEND_THANK_YOU)){
+					if(getDolGlobalString('DOLISTOREXTRACT_DISABLE_SEND_THANK_YOU')){
 						$mailSent++;
 					}
-					elseif ($mailToSend && empty($conf->global->DOLISTOREXTRACT_DISABLE_SEND_THANK_YOU)) {
+					elseif ($mailToSend && !getDolGlobalString('DOLISTOREXTRACT_DISABLE_SEND_THANK_YOU')) {
 						require_once DOL_DOCUMENT_ROOT.'/core/class/CMailFile.class.php';
 						require_once DOL_DOCUMENT_ROOT.'/core/class/html.formmail.class.php';
 						$formMail = new FormMail($this->db);
 
-						$from = $conf->global->MAIN_INFO_SOCIETE_NOM .' <dolistore@atm-consulting.fr>';
+						$from = getDolGlobalString('MAIN_INFO_SOCIETE_NOM') . ' <dolistore@atm-consulting.fr>';
 						$sendto = $dolistoreMail->email;
 						$sendtocc = '';
 						$sendtobcc = '';
@@ -611,12 +622,134 @@ class ActionsDolistorextract
 			++$error;
 			array_push($this->errors, 'No data for email '.$email->header->uid);
 		}
-
 		if ($error) {
+			$this->nbErrors += $error;
 			return -1 * $error;
 		} else {
 			return $mailSent;
 		}
-
 	}
+
+	/**
+	 * Adds a web module sale to the database.
+	 *
+	 * @param array $TItemDatas Array containing the item data (price, quantity, reference).
+	 * @param int $socid ID of the company associated with the sale.
+	 * @return int Returns the ID of the created sale or <= 0 in case of failure.
+	 */
+	public function addWebmoduleSales(array $TItemDatas, int $socid): int {
+		global $user, $error;
+
+		// Include the Webmodulesales class
+		dol_include_once('/webhost/class/webmodulesales.class.php');
+
+		// Instantiate a new Webmodulesales object
+		$webSales = new Webmodulesales($this->db);
+
+		// Get the web module ID based on the Dolistore ID
+		$fk_webmodule = $this->getWebmoduleIdByDolistoreId($TItemDatas['item_reference'] ?? '');
+
+		// Check if a corresponding web module was found
+		if ($fk_webmodule > 0) {
+			// Convert the price to float and assign the data to the $webSales object
+			$webSales->amount = $this->convertToFloat($TItemDatas['item_price'] ?? 0);
+			$webSales->qty = $TItemDatas['item_quantity'] ?? 1;  // Default value if not specified
+			$webSales->fk_soc = $socid;
+			$webSales->import_key = date('Ymd');  // Generate import key with current date
+			$webSales->fk_webmodule = $fk_webmodule;
+			$webSales->date_sale = $TItemDatas['date_sale'] ?? dol_now() ;  // Current date for the sale
+			$webSales->status = !empty($TItemDatas['item_refunded']) ? WebModuleSales::STATUS_REFUNDED : Webmodulesales::STATUS_SOLD;
+
+			// Create the sale and check the result
+			$res = $webSales->create($user);
+			if ($res <= 0) {
+				// If creation fails, log the error and add it to the error array
+				$this->logError('Unable to create web sale: ' . $webSales->error. ' '.implode(' - ', $webSales->errors));
+			}
+
+			// Return the ID of the created sale if successful
+			return $res;
+		}
+		// If no web module is found, log the error and add it to the error array
+		$this->logError('No web module found for fk_dolistore=' . ($TItemDatas['item_reference'] . ' '.  $TItemDatas['item_name']));
+
+
+		// Return 0 if no web module was found
+		return 0;
+	}
+
+	/**
+	 * Retrieves the web module ID based on the Dolistore ID.
+	 *
+	 * @param string $fk_dolistore Dolistore ID.
+	 * @return int Web module ID or 0 if not found.
+	 */
+	public function getWebmoduleIdByDolistoreId(string $fk_dolistore): int {
+		// Build SQL query to get the web module ID
+		$sql = /** @lang SQL */
+			'SELECT DISTINCT w.rowid
+            FROM ' . $this->db->prefix() . 'webmodule as w
+                INNER JOIN ' . $this->db->prefix() . 'webmodule_version wv ON w.rowid = wv.fk_webmodule
+                INNER JOIN ' . $this->db->prefix() . 'webmodule_version_extrafields wve ON wv.rowid = wve.fk_object
+            WHERE wve.iddolistore = "' . $this->db->escape($fk_dolistore) . '"';
+
+		// Execute the query
+		$resql = $this->db->query($sql);
+
+		// Check if the query failed
+		if (! $resql) {
+			return 0;  // Return 0 if no result was found
+		}
+
+		// Extract the result
+		$obj = $this->db->fetch_object($resql);
+
+		// Return the web module ID or 0 if not found
+		return $obj->rowid ?? 0;
+	}
+
+	/**
+	 * Converts a formatted string representing a monetary amount to a float.
+	 *
+	 * @param string $formattedString The formatted amount (e.g., '2 356 156,00 €').
+	 * @return float The converted float value (e.g., 2356156.00).
+	 */
+	public function convertToFloat(string $formattedString): float {
+		//Espace insécable
+		$formattedString = str_replace("\xC2\xA0", " ", $formattedString);  // Remplace les espaces insécables par des espaces réguliers
+
+		// Step 1: Validate the input (checks if the string contains digits, commas, and potentially a currency symbol)
+		if (! preg_match('/^[\d\s,.€]+$/', $formattedString)) {
+			$this->logError('Invalid number format: ' . $formattedString);
+		}
+
+		// Step 2: Remove the euro symbol and thousand separators
+		$cleanString = str_replace(['€', ' '], '', $formattedString);
+
+		// Step 3: Replace the decimal comma with a dot for PHP's float notation
+		$cleanString = str_replace(',', '.', $cleanString);
+
+		// Step 4: Convert the cleaned string to float
+		$floatValue = (float) $cleanString;
+
+		// Return the converted float value
+		return $floatValue;
+	}
+
+	/**
+	 * Logs an error message, adds it to the error array, and increments the error count.
+	 *
+	 * @param string $message The error message to log.
+	 * @return void
+	 */
+	private function logError(string $message): void {
+		global $error;
+		dol_syslog(__METHOD__ . ' - ' . $message, LOG_ERR);
+		$this->errors[] = $message;
+		$this->logCat .= $message;
+		$error++;
+	}
+
+
+
 }
