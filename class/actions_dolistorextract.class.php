@@ -33,7 +33,7 @@ use SSilence\ImapClient\ImapClient as Imap;
  *    \class      ActionsTicketsup
  *    \brief      Class Actions of the module dolistorextract
  */
-class ActionsDolistorextract extends CommonHookActions
+class ActionsDolistorextract
 {
 	public $db;
 	public $dao;
@@ -99,7 +99,8 @@ class ActionsDolistorextract extends CommonHookActions
 
 		$socStatic = new Societe($this->db);
 
-		if (empty($dolistoreMail->invoice_company) || empty($dolistoreMail->email)) {
+		if (empty($dolistoreMail->buyer_company) || empty($dolistoreMail->buyer_email)) {
+			print "buyer_company or email not found !";
 			return -1;
 		}
 		// Load object modCodeTiers
@@ -117,20 +118,20 @@ class ActionsDolistorextract extends CommonHookActions
 		$modCodeClient = new $module;
 
 		$socStatic->code_client = $modCodeClient->getNextValue($socStatic,0);
-		$socStatic->name = $dolistoreMail->invoice_company;
-		$socStatic->name_bis = $dolistoreMail->invoice_lastname;
-		$socStatic->firstname = $dolistoreMail->invoice_firstname;
-		$socStatic->address = $dolistoreMail->invoice_address1;
-		$socStatic->zip = $dolistoreMail->invoice_postal_code;
-		$socStatic->town = $dolistoreMail->invoice_city;
-		$socStatic->phone = $dolistoreMail->invoice_phone;
-		$socStatic->email = $dolistoreMail->email;
-		$socStatic->country_code = $dolistoreMail->invoice_country;
-		$socStatic->state = $dolistoreMail->invoice_state;
-		$socStatic->multicurrency_code = $dolistoreMail->currency;
+		$socStatic->name = $dolistoreMail->buyer_company;
+		$socStatic->name_bis = $dolistoreMail->buyer_lastname;
+		$socStatic->firstname = $dolistoreMail->buyer_firstname;
+		$socStatic->address = $dolistoreMail->buyer_address1;
+		$socStatic->zip = $dolistoreMail->buyer_postal_code;
+		$socStatic->town = $dolistoreMail->buyer_city;
+		$socStatic->phone = $dolistoreMail->buyer_phone;
+		$socStatic->email = $dolistoreMail->buyer_email;
+		$socStatic->country_code = $dolistoreMail->buyer_country_code;
+		$socStatic->state = $dolistoreMail->buyer_state;
+		$socStatic->multicurrency_code = $dolistoreMail->order_currency;
 
-		// Le champ invoice_country contient bien le pays dans la langue : Espagne => Spain
-		$resql = $this->db->query('SELECT rowid as fk_country FROM '.MAIN_DB_PREFIX."c_country WHERE label = '".$this->db->escape($dolistoreMail->invoice_country)."'");
+		// Le champ buyer_country_code contient BE/FR/DE...
+		$resql = $this->db->query('SELECT rowid as fk_country FROM '.MAIN_DB_PREFIX."c_country WHERE code = '".$this->db->escape($dolistoreMail->buyer_country_code)."'");
 		if($resql) {
 			if(($obj = $this->db->fetch_object($resql)) && $this->db->num_rows($resql) == 1) $socStatic->country_id = $obj->fk_country;
 		}
@@ -390,7 +391,10 @@ class ActionsDolistorextract extends CommonHookActions
 		    dol_include_once('/dolistorextract/class/dolistoreMail.class.php');
 		}
 
-		$dolistoreMailExtract = new \dolistoreMailExtract($this->db, $email->message->html);
+		// print "<p>Eric :: </p>";
+		// print json_encode($this->ExtractJsonFromText($email->message->text));
+		$dolistoreMailExtract = new \dolistoreMailExtract($this->db, $email->message->text);
+
 		$dolistoreMail = new \dolistoreMail();
 		$dolistorextractActions = new \ActionsDolistorextract($this->db);
 
@@ -402,8 +406,14 @@ class ActionsDolistorextract extends CommonHookActions
 
 		$langEmail = $dolistoreMailExtract->detectLang($email->header->subject);
 		$datas = $dolistoreMailExtract->extractAllDatas();
+
+		if(empty($datas['buyer_email'])) {
+			// print "Erreur email vide !<br />";
+			return -2;
+		}
+
 		$dolistoreMail->setDatas($datas);
-		if (is_array($datas) and count($datas) > 0) {
+		if (is_array($datas) && count($datas) > 0) {
 
 			$this->logCat.= '<div>';
 			foreach ($datas as $dk => $dv){
@@ -418,22 +428,29 @@ class ActionsDolistorextract extends CommonHookActions
 			 - création d'un évènement "Achat module Dolistore" avec mention de la référence de la commande Dolistore
 			 */
 			$socStatic = new Societe($this->db);
-			// Search exactly by name
-			$filterSearch = array();
 			$searchSoc = null;
-			if(floatval(DOL_VERSION) <= 8.0) {
-				$searchSoc = $socStatic->searchByName($datas['invoice_company'], 0, $filterSearch, true, false);
-			}
-			else {
-				$contact = new Contact($this->db);
-				$resfetch = $contact->fetch('', '', '', trim($datas['email']));
-				if ($resfetch > 0) {
 
+			// Search exactly by name
+			$resfetch = $socStatic->fetch(0,$datas['buyer_company']);
+			if ($resfetch > 0) {
+				$searchSoc = $socStatic->id;
+			} else {
+				$resfetch = $socStatic->fetch(0,'','','','','','','','','',$datas['buyer_email']);
+				if ($resfetch > 0) {
+					$searchSoc = $socStatic->id;
+				}
+			}
+			//search on contact
+			if ($searchSoc == null) {
+				$contact = new Contact($this->db);
+				print "search on contact email with " . $datas['buyer_email'] . "<br />";
+				$resfetch = $contact->fetch('', '', '', trim($datas['buyer_email']));
+				if ($resfetch > 0) {
 					if($resfetch > 1) { // Plusieurs contacts avec cette adresse, donc potentiellement plusieurs tiers, on prend le plus ancien
 						$q = 'SELECT s.rowid
 								FROM '.MAIN_DB_PREFIX.'societe s
 								INNER JOIN '.MAIN_DB_PREFIX.'socpeople sp ON (sp.fk_soc = s.rowid)
-								WHERE sp.email = "'.$datas['email'].'"
+								WHERE sp.email = "'.$datas['buyer_email'].'"
 								ORDER BY s.rowid ASC
 								LIMIT 1';
 						$resql = $this->db->query($q);
@@ -444,34 +461,22 @@ class ActionsDolistorextract extends CommonHookActions
 					} else {
 						// note societe class fetch returns 1 on success, not socid
 						$resSearch = $socStatic->fetch($contact->socid);  // Retourne -2 si on trouve plusieurs Tiers
-                        if ($resSearch) {
-                            $searchSoc = $socStatic->id;
-                        }
+						if ($resSearch) {
+							$searchSoc = $socStatic->id;
+						}
 					}
 				}
 			}
-
-			if(empty($datas['invoice_company'])) {
+			if(empty($datas['buyer_company'])) {
 				++$error;
 				array_push($this->errors,  "Erreur recherche client");
 			} else {
-                if(floatval(DOL_VERSION) <= 8.0) {
-                    // Customer found
-                    if(count($searchSoc) > 0) {
-                        $socid = $searchSoc[0]->id;
-                    }
-                    else {
-                        // Customer not found => creation
-                        $socid = $dolistorextractActions->newCustomerFromDatas($userStatic, $dolistoreMail);
-                    }
-                }
-                else {
-                    if(! empty($searchSoc) && $searchSoc > 0) $socid = $searchSoc;
-                    else {
-                        // Customer not found => creation
-                        $socid = $dolistorextractActions->newCustomerFromDatas($userStatic, $dolistoreMail);
-                    }
-                }
+				if(! empty($searchSoc) && $searchSoc > 0) $socid = $searchSoc;
+				else {
+					// Customer not found => creation
+					// print "customer not found, create it";
+					$socid = $dolistorextractActions->newCustomerFromDatas($userStatic, $dolistoreMail);
+				}
 
 				if($socid > 0) {
 
@@ -481,11 +486,9 @@ class ActionsDolistorextract extends CommonHookActions
 					$socStatic->fetch($socid);
 					$listProduct = array();
 
-
-					// Loop on each product
+					// Loop on each product -- 2025 only one per mail
 					foreach ($dolistoreMail->items as $product) {
-
-						$this->addWebmoduleSales($product, $socid);
+						// $this->addWebmoduleSales($product, $socid);
 
 					    // Save list of products for email message
 					    $listProduct[] = $product['item_name'];
@@ -567,7 +570,7 @@ class ActionsDolistorextract extends CommonHookActions
 						$formMail = new FormMail($this->db);
 
 						$from = getDolGlobalString('MAIN_INFO_SOCIETE_NOM') . ' <dolistore@atm-consulting.fr>';
-						$sendto = $dolistoreMail->email;
+						$sendto = $dolistoreMail->buyer_email;
 						$sendtocc = '';
 						$sendtobcc = '';
 						$trackid = '';
@@ -583,9 +586,9 @@ class ActionsDolistorextract extends CommonHookActions
 						$listProductString = implode(', ', $listProduct);
 						$arraySubstitutionDolistore = [
 								'__DOLISTORE_ORDER_NAME__' => $dolistoreMail->order_name,
-								'__DOLISTORE_INVOICE_FIRSTNAME__' => $dolistoreMail->invoice_firstname,
-								'__DOLISTORE_INVOICE_COMPANY__' => $dolistoreMail->invoice_company,
-								'__DOLISTORE_INVOICE_LASTNAME__' => $dolistoreMail->invoice_lastname,
+								'__DOLISTORE_INVOICE_FIRSTNAME__' => $dolistoreMail->buyer_firstname,
+								'__DOLISTORE_INVOICE_COMPANY__' => $dolistoreMail->buyer_company,
+								'__DOLISTORE_INVOICE_LASTNAME__' => $dolistoreMail->buyer_lastname,
 						        '__DOLISTORE_LIST_PRODUCTS__' => $listProductString
 						];
 
