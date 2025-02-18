@@ -496,7 +496,9 @@ class ActionsDolistorextract
 								$foundCatId = $catStatic->id;
 								$this->logCat.= "<br />Catégorie trouvée pour ref ".$product['item_reference']." (".$product['item_name'].") : ".$catStatic->getNomUrl(1);
 							} else {
-								++$error;
+								//si c'est un mail avec des produits qui ne sont pas à nous ? -> ce n'est pas une erreur
+								//situation délicate !
+								// ++$error;
 								array_push($this->errors, 'Pas de catégorie trouvée pour la ref='.$product['item_reference']);
 							}
 						} else {
@@ -520,7 +522,16 @@ class ActionsDolistorextract
 							if (isModEnabled("indirectcustomers")) {
 								dol_include_once('/indirectcustomers/class/saleshistory.class.php');
 								$sh = new SalesHistory($this->db);
-								$sh->addNew($socid, $product['item_name'], $product['item_price'], $product['item_reference'], $product['item_quantity'], 'SRC_DOLISTORE', 'DOLISTORE');
+								//Fri, 14 Jun 2024 00:58:53 +0200
+								$headerdate = DateTime::createFromFormat( 'D, d M Y H:i:s O', trim($email->header->date));
+								$datesell = null;
+								if(empty($headerdate) || is_null($headerdate)) {
+									$datesell = date('Y-m-d');
+								} else {
+									$datesell = $headerdate->format( 'Y-m-d');
+								}
+								dol_syslog("indirect customer date sell = $datesell");
+								$sh->addNew($socid, $product['item_name'], $product['item_price'], $product['item_reference'], 'SRC_DOLISTORE', 'DOLISTORE', $datesell, $product['item_name']);
 							}
 
 							if ($result > 0) {
