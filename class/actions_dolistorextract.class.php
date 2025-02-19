@@ -100,7 +100,7 @@ class ActionsDolistorextract
 		$socStatic = new Societe($this->db);
 
 		if (empty($dolistoreMail->buyer_company) || empty($dolistoreMail->buyer_email)) {
-			print "buyer_company or email not found !";
+			// print "buyer_company or email not found !";
 			return -1;
 		}
 		// Load object modCodeTiers
@@ -441,7 +441,7 @@ class ActionsDolistorextract
 			//search on contact
 			if ($searchSoc == null) {
 				$contact = new Contact($this->db);
-				print "search on contact email with " . $datas['buyer_email'] . "<br />";
+				// print "search on contact email with " . $datas['buyer_email'] . "<br />";
 				$resfetch = $contact->fetch('', '', '', trim($datas['buyer_email']));
 				if ($resfetch > 0) {
 					if($resfetch > 1) { // Plusieurs contacts avec cette adresse, donc potentiellement plusieurs tiers, on prend le plus ancien
