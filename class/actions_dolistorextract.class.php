@@ -391,8 +391,6 @@ class ActionsDolistorextract
 		    dol_include_once('/dolistorextract/class/dolistoreMail.class.php');
 		}
 
-		// print "<p>Eric :: </p>";
-		// print json_encode($this->ExtractJsonFromText($email->message->text));
 		$dolistoreMailExtract = new \dolistoreMailExtract($this->db, $email->message->text);
 
 		$dolistoreMail = new \dolistoreMail();
