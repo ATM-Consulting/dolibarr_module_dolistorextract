@@ -488,7 +488,9 @@ class ActionsDolistorextract
 
 					// Loop on each product -- 2025 only one per mail
 					foreach ($dolistoreMail->items as $product) {
-						// $this->addWebmoduleSales($product, $socid);
+						if(isModEnabled("webhost")) {
+							$this->addWebmoduleSales($product, $socid);
+						}
 
 					    // Save list of products for email message
 					    $listProduct[] = $product['item_name'];
