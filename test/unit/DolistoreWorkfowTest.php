@@ -55,24 +55,24 @@ $conf->global->MAIN_DISABLE_ALL_MAILS=1;
  */
 class DolistoreWorkflowTest extends TestCase
 {
-	
+
 	protected $savconf;
 	protected $savuser;
 	protected $savlangs;
 	protected $savdb;
-	
+
 	protected $socid;
-	
+
 	/**
-	 * 
+	 *
 	 * @var dolistoreMail dolistoreMail object
 	 */
 	protected $dolistoreMail;
-	
+
 	protected $dolistoreMailExtract;
-	
+
 	protected $dolistorextractActions;
-	
+
 
 	/**
 	 * Global test setup
@@ -80,7 +80,7 @@ class DolistoreWorkflowTest extends TestCase
 	public static function setUpBeforeClass()
 	{
 		fwrite(STDOUT, __METHOD__ . "\n");
-		
+
 	}
 
 	/**
@@ -89,22 +89,22 @@ class DolistoreWorkflowTest extends TestCase
 	protected function setUp()
 	{
 		fwrite(STDOUT, __METHOD__ . "\n");
-		
+
 		global $conf,$user,$langs,$db;
-		
+
 		$this->savconf=$conf;
 		$this->savuser=$user;
 		$this->savlangs=$langs;
 		$this->savdb=$db;
-		
-		
+
+
 		$this->dolistoreMail = new \dolistoreMail();
-		
+
 		$html = file_get_contents(dirname(__FILE__).'/../ex_info_produit.html');
 		$this->dolistoreMailExtract = new \dolistoreMailExtract($db, $html);
-		
+
 		$this->dolistorextractActions = new \ActionsDolistorextract($db);
-		
+
 		fwrite(STDOUT, __METHOD__ ." db->type=".$db->type." user->id=".$user->id."\n");
 	}
 
@@ -131,9 +131,9 @@ class DolistoreWorkflowTest extends TestCase
 	{
 		fwrite(STDOUT, __METHOD__ . "\n");
 	}
-	
-	
-	
+
+
+
 	/**
 	* testCreateCustomerFromDatas
 	*
@@ -143,55 +143,55 @@ class DolistoreWorkflowTest extends TestCase
 	*/
 	public function testCreateCustomerFromDatas()
 	{
-		
+
 		//global $conf,$user,$langs,$db;
 		$conf=$this->savconf;
 		$user=$this->savuser;
 		$langs=$this->savlangs;
 		$db=$this->savdb;
-		
+
 		// Extract datas
 		$datas = $this->dolistoreMailExtract->extractOrderDatas();
-		 
+
 		if (!class_exists('User')) {
 			require_once DOL_DOCUMENT_ROOT.'/user/class/user.class.php';
 		}
 		$this->dolistoreMail->setDatas($datas);
-		
+
 		$userStatic = new \User($db);
-		$userStatic->fetch($conf->global->DOLISTOREXTRACT_USER_FOR_ACTIONS);
-		
+		$userStatic->fetch( getDolGlobalInt('DOLISTOREXTRACT_USER_FOR_ACTIONS'));
+
 		$socid = $this->dolistorextractActions->newCustomerFromDatas($userStatic, $this->dolistoreMail);
 		fwrite(STDOUT, __METHOD__." created socid=".$socid."\n");
 		$this->assertGreaterThan(0, $socid);
-		
+
 		return $socid;
 	}
-	
+
 	/**
 	 * testSetCustomerCategoryFromOrder
-	 * 
+	 *
 	 * @param int $socid
 	 * return int
 	 * @depends testCreateCustomerFromDatas
 	 */
 	public function testSetCustomerCategoryFromOrder($socid) {
-		
-		
+
+
 		$conf=$this->savconf;
 		$user=$this->savuser;
 		$langs=$this->savlangs;
 		$db=$this->savdb;
-		
+
 		$productRefTest = 'prod1234';
-		
+
 		$result = $this->dolistoreMailExtract->setCustomerCategoryFromOrder($productRefTest, $socid);
 		fwrite(STDOUT, __METHOD__." result=".$result."\n");
 		$this->assertGreaterThan(0, $result);
-		
+
 		return $socid;
 	}
-	
+
 	/**
 	 * testCreateEventFromDatas
 	 *
@@ -204,11 +204,11 @@ class DolistoreWorkflowTest extends TestCase
 		$user=$this->savuser;
 		$langs=$this->savlangs;
 		$db=$this->savdb;
-		
+
 		$datas = $this->dolistoreMailExtract->extractAllDatas();
 		$result = $this->dolistoreMailExtract->createEventsFromExtract($datas, $socid);
-		
-		
+
+
 
 	}
 
@@ -218,7 +218,7 @@ class DolistoreWorkflowTest extends TestCase
 	public static function tearDownAfterClass()
 	{
 		fwrite(STDOUT, __METHOD__ . "\n");
-		
+
 	}
 
 	/**
@@ -232,6 +232,6 @@ class DolistoreWorkflowTest extends TestCase
 		fwrite(STDOUT, __METHOD__ . "\n");
 		throw $t;
 	}
-	
-	
+
+
 }

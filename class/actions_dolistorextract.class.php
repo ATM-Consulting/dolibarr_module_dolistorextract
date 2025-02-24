@@ -219,15 +219,15 @@ class ActionsDolistorextract extends CommonHookActions
 		$res = 0;
 
 		$userStatic = new User($this->db);
-		$userStatic->fetch($conf->global->DOLISTOREXTRACT_USER_FOR_ACTIONS);
+		$userStatic->fetch(getDolGlobalInt('DOLISTOREXTRACT_USER_FOR_ACTIONS'));
 
 		require_once DOL_DOCUMENT_ROOT.'/comm/action/class/actioncomm.class.php';
 		$actionStatic = new ActionComm($this->db);
 
 		$actionStatic->socid = $socid;
 
-		$actionStatic->authorid = $conf->global->DOLISTOREXTRACT_USER_FOR_ACTIONS;
-		$actionStatic->userownerid = $conf->global->DOLISTOREXTRACT_USER_FOR_ACTIONS;
+		$actionStatic->authorid = getDolGlobalInt('DOLISTOREXTRACT_USER_FOR_ACTIONS');
+		$actionStatic->userownerid = getDolGlobalInt('DOLISTOREXTRACT_USER_FOR_ACTIONS');
 
 		$actionStatic->datec = time();
 		$actionStatic->datem = time();
@@ -277,9 +277,9 @@ class ActionsDolistorextract extends CommonHookActions
 		$this->nbErrors = 0;
 		$langs->load('main');
 
-		$mailbox = $conf->global->DOLISTOREXTRACT_IMAP_SERVER;
-		$username = $conf->global->DOLISTOREXTRACT_IMAP_USER;
-		$password = $conf->global->DOLISTOREXTRACT_IMAP_PWD;
+		$mailbox = getDolGlobalString('DOLISTOREXTRACT_IMAP_SERVER');
+		$username = getDolGlobalString('DOLISTOREXTRACT_IMAP_USER');
+		$password = getDolGlobalString('DOLISTOREXTRACT_IMAP_PWD');
 		$encryption = Imap::ENCRYPT_SSL;
 
 		// Open connection
@@ -335,7 +335,7 @@ class ActionsDolistorextract extends CommonHookActions
 					// Mark email as read
 					$imap->setSeenMessage($email->header->msgno, true);
 					if(getDolGlobalString('DOLISTOREXTRACT_IMAP_FOLDER_ARCHIVE')) {
-						$resMov = $imap->moveMessage($email->header->uid, $conf->global->DOLISTOREXTRACT_IMAP_FOLDER_ARCHIVE);
+						$resMov = $imap->moveMessage($email->header->uid, getDolGlobalString('DOLISTOREXTRACT_IMAP_FOLDER_ARCHIVE'));
 						if(!$resMov){
 							$this->logCat.='<br/>Erreur move message '.$email->header->uid.' TO ' . getDolGlobalString('DOLISTOREXTRACT_IMAP_FOLDER_ARCHIVE');
 						}
@@ -343,7 +343,7 @@ class ActionsDolistorextract extends CommonHookActions
 				} else{
 					$this->logCat.= '-> <stong class="error">FAIL</stong>';
 					if(getDolGlobalString('DOLISTOREXTRACT_IMAP_FOLDER_ERROR')) {
-						$resMov = $imap->moveMessage($email->header->uid, $conf->global->DOLISTOREXTRACT_IMAP_FOLDER_ERROR);
+						$resMov = $imap->moveMessage($email->header->uid, getDolGlobalString('DOLISTOREXTRACT_IMAP_FOLDER_ERROR'));
 						if(!$resMov){
 							$this->logCat.='<br/>Erreur move message '.$email->header->uid.' TO ' . getDolGlobalString('DOLISTOREXTRACT_IMAP_FOLDER_ERROR');
 						}
@@ -395,7 +395,7 @@ class ActionsDolistorextract extends CommonHookActions
 		$dolistorextractActions = new \ActionsDolistorextract($this->db);
 
 		$userStatic = new \User($this->db);
-		$userStatic->fetch($conf->global->DOLISTOREXTRACT_USER_FOR_ACTIONS);
+		$userStatic->fetch(getDolGlobalInt('DOLISTOREXTRACT_USER_FOR_ACTIONS'));
 
 		$mailSent = 0; // Count number of sent emails
 
@@ -421,32 +421,28 @@ class ActionsDolistorextract extends CommonHookActions
 			// Search exactly by name
 			$filterSearch = array();
 			$searchSoc = null;
-			if(floatval(DOL_VERSION) <= 8.0) {
-				$searchSoc = $socStatic->searchByName($datas['invoice_company'], 0, $filterSearch, true, false);
-			}
-			else {
-				$contact = new Contact($this->db);
-				$resfetch = $contact->fetch('', '', '', trim($datas['email']));
-				if ($resfetch > 0) {
 
-					if($resfetch > 1) { // Plusieurs contacts avec cette adresse, donc potentiellement plusieurs tiers, on prend le plus ancien
-						$q = 'SELECT s.rowid
-								FROM '.MAIN_DB_PREFIX.'societe s
-								INNER JOIN '.MAIN_DB_PREFIX.'socpeople sp ON (sp.fk_soc = s.rowid)
-								WHERE sp.email = "'.$datas['email'].'"
-								ORDER BY s.rowid ASC
-								LIMIT 1';
-						$resql = $this->db->query($q);
-						if(!empty($resql)) {
-							$res = $this->db->fetch_object($resql);
-							$searchSoc = $res->rowid;
-						}
-					} else {
-						// note societe class fetch returns 1 on success, not socid
-						$resSearch = $socStatic->fetch($contact->socid);  // Retourne -2 si on trouve plusieurs Tiers
-                        if ($resSearch) {
-                            $searchSoc = $socStatic->id;
-                        }
+			$contact = new Contact($this->db);
+			$resfetch = $contact->fetch('', '', '', trim($datas['email']));
+			if ($resfetch > 0) {
+
+				if($resfetch > 1) { // Plusieurs contacts avec cette adresse, donc potentiellement plusieurs tiers, on prend le plus ancien
+					$q = 'SELECT s.rowid
+							FROM '.MAIN_DB_PREFIX.'societe s
+							INNER JOIN '.MAIN_DB_PREFIX.'socpeople sp ON (sp.fk_soc = s.rowid)
+							WHERE sp.email = "'.$datas['email'].'"
+							ORDER BY s.rowid ASC
+							LIMIT 1';
+					$resql = $this->db->query($q);
+					if(!empty($resql)) {
+						$res = $this->db->fetch_object($resql);
+						$searchSoc = $res->rowid;
+					}
+				} else {
+					// note societe class fetch returns 1 on success, not socid
+					$resSearch = $socStatic->fetch($contact->socid);  // Retourne -2 si on trouve plusieurs Tiers
+					if ($resSearch) {
+						$searchSoc = $socStatic->id;
 					}
 				}
 			}
@@ -455,23 +451,12 @@ class ActionsDolistorextract extends CommonHookActions
 				++$error;
 				array_push($this->errors,  "Erreur recherche client");
 			} else {
-                if(floatval(DOL_VERSION) <= 8.0) {
-                    // Customer found
-                    if(count($searchSoc) > 0) {
-                        $socid = $searchSoc[0]->id;
-                    }
-                    else {
-                        // Customer not found => creation
-                        $socid = $dolistorextractActions->newCustomerFromDatas($userStatic, $dolistoreMail);
-                    }
-                }
-                else {
-                    if(! empty($searchSoc) && $searchSoc > 0) $socid = $searchSoc;
-                    else {
-                        // Customer not found => creation
-                        $socid = $dolistorextractActions->newCustomerFromDatas($userStatic, $dolistoreMail);
-                    }
-                }
+
+				if(! empty($searchSoc) && $searchSoc > 0) $socid = $searchSoc;
+				else {
+					// Customer not found => creation
+					$socid = $dolistorextractActions->newCustomerFromDatas($userStatic, $dolistoreMail);
+				}
 
 				if($socid > 0) {
 
@@ -557,9 +542,9 @@ class ActionsDolistorextract extends CommonHookActions
 						$trackid = '';
 
 						// EN template by default
-						$idTemplate = $conf->global->DOLISTOREXTRACT_EMAIL_TEMPLATE_EN;
+						$idTemplate = getDolGlobalInt('DOLISTOREXTRACT_EMAIL_TEMPLATE_EN');
 						if(preg_match('/fr.*/', $langEmail)) {
-							$idTemplate = $conf->global->DOLISTOREXTRACT_EMAIL_TEMPLATE_FR;
+							$idTemplate = getDolGlobalInt('DOLISTOREXTRACT_EMAIL_TEMPLATE_FR');
 						}
 						$usedTemplate = $formMail->getEMailTemplate($this->db, 'dolistore_extract', $userStatic, '',$idTemplate);
 						$listProductString = implode(', ', $listProduct);

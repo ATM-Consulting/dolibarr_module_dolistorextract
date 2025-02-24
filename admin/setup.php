@@ -123,7 +123,7 @@ print '<td align="center">'.$langs->trans("Action").'</td>';
 print "</tr>\n";
 $var=true;
 
-
+var_dump($conf->global->DOLISTOREXTRACT_EMAIL_TEMPLATE_EN);exit();
 // IMAP server
 $var=!$var;
 print '<form action="'.$_SERVER["PHP_SELF"].'" method="POST">';
@@ -290,9 +290,9 @@ print '<a class="butActions" href="'.$_SERVER['PHP_SELF'].'?action=test_connect"
 if ($action == 'test_connect') {
 
 
-	$mailbox = $conf->global->DOLISTOREXTRACT_IMAP_SERVER;
-	$username = $conf->global->DOLISTOREXTRACT_IMAP_USER;
-	$password = $conf->global->DOLISTOREXTRACT_IMAP_PWD;
+	$mailbox = getDolGlobalString('DOLISTOREXTRACT_IMAP_SERVER');
+	$username = getDolGlobalString('DOLISTOREXTRACT_IMAP_USER');
+	$password = getDolGlobalString('DOLISTOREXTRACT_IMAP_PWD');
 	$encryption = Imap::ENCRYPT_SSL;
 
 	// Open connection

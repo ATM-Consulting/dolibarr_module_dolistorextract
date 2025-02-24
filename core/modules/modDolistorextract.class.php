@@ -93,7 +93,7 @@ class modDolistorextract extends DolibarrModules
 	 	//							'js' => array('/dolistorextract/js/dolistorextract.js'),          // Set this to relative path of js file if module must load a js on all pages
 		//							'hooks' => array('hookcontext1','hookcontext2',...) // Set here all hooks context managed by module. You can also set hook context 'all'
 		//							'dir' => array('output' => 'othermodulename'),      // To force the default directories names
-		//							'workflow' => array('WORKFLOW_MODULE1_YOURACTIONTYPE_MODULE2'=>array('enabled'=>'! empty($conf->module1->enabled) && ! empty($conf->module2->enabled)', 'picto'=>'yourpicto@dolistorextract')) // Set here all workflow context managed by module
+		//							'workflow' => array('WORKFLOW_MODULE1_YOURACTIONTYPE_MODULE2'=>array('enabled'=>'! empty(isModEnabled('module1')) && ! empty($conf->module2->enabled)', 'picto'=>'yourpicto@dolistorextract')) // Set here all workflow context managed by module
 		//                        );
 		$this->module_parts = array(
 				'hooks' => array('admin','emailtemplates')
@@ -148,7 +148,7 @@ class modDolistorextract extends DolibarrModules
 		// 'user'             to add a tab in user view
         $this->tabs = array();
 
-		if (! isset($conf->dolistorextract) || ! isset($conf->dolistorextract->enabled))
+		if (! isset($conf->dolistorextract) || ! isModEnabled('dolistorextract'))
         {
         	$conf->dolistorextract=new stdClass();
         	$conf->dolistorextract->enabled=0;
@@ -249,8 +249,8 @@ class modDolistorextract extends DolibarrModules
 								'url'=>'/dolistorextract/mails.php',
 								'langs'=>'dolistorextract@dolistorextract',	        // Lang file to use (without .lang) by module. File must be in langs/code_CODE/ directory.
 								'position'=>100,
-								'enabled'=>'$conf->dolistorextract->enabled',  // Define condition to show or hide menu entry. Use '$conf->dolistorextract->enabled' if entry must be visible if module is enabled. Use '$leftmenu==\'system\'' to show if leftmenu system is selected.
-								'perms'=>'$user->rights->dolistorextract->read',			                // Use 'perms'=>'$user->rights->dolistorextract->level1->level2' if you want your menu with a permission rules
+								'enabled'=>'isModEnabled("dolistorextract")',  // Define condition to show or hide menu entry. Use '$conf->dolistorextract->enabled' if entry must be visible if module is enabled. Use '$leftmenu==\'system\'' to show if leftmenu system is selected.
+								'perms'=>'$user->hasRight("dolistorextract","read")',			                // Use 'perms'=>'$user->rights->dolistorextract->level1->level2' if you want your menu with a permission rules
 								'target'=>'',
 								'user'=>0);
 
