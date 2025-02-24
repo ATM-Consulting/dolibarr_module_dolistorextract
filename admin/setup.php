@@ -123,7 +123,6 @@ print '<td align="center">'.$langs->trans("Action").'</td>';
 print "</tr>\n";
 $var=true;
 
-var_dump($conf->global->DOLISTOREXTRACT_EMAIL_TEMPLATE_EN);exit();
 // IMAP server
 $var=!$var;
 print '<form action="'.$_SERVER["PHP_SELF"].'" method="POST">';
