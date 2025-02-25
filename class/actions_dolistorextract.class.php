@@ -131,7 +131,7 @@ class ActionsDolistorextract
 		$socStatic->multicurrency_code = $dolistoreMail->order_currency;
 
 		// Le champ buyer_country_code contient BE/FR/DE...
-		$resql = $this->db->query('SELECT rowid as fk_country FROM '.MAIN_DB_PREFIX."c_country WHERE code = '".$this->db->escape($dolistoreMail->buyer_country_code)."'");
+		$resql = $this->db->query('SELECT rowid as fk_country FROM '.$this->db->prefix()."c_country WHERE code = '".$this->db->escape($dolistoreMail->buyer_country_code)."'");
 		if($resql) {
 			if(($obj = $this->db->fetch_object($resql)) && $this->db->num_rows($resql) == 1) $socStatic->country_id = $obj->fk_country;
 		}
@@ -181,7 +181,7 @@ class ActionsDolistorextract
 	 */
 	public function searchCategoryDolistore($productRef)
 	{
-		$sql = "SELECT fk_object FROM ".MAIN_DB_PREFIX."categories_extrafields WHERE ref_dolistore='".$productRef."'";
+		$sql = "SELECT fk_object FROM ".$this->db->prefix()."categories_extrafields WHERE ref_dolistore='".strval($productRef)."'";
 
 		dol_syslog(__METHOD__, LOG_DEBUG);
 		$resql = $this->db->query($sql);
@@ -249,7 +249,7 @@ class ActionsDolistorextract
 
 	private function isAlreadyImported($noteString)
 	{
-		$sql = "SELECT id FROM ".MAIN_DB_PREFIX."actioncomm WHERE note='".$noteString."'";
+		$sql = "SELECT id FROM ".$this->db->prefix()."actioncomm WHERE note='".strval($noteString)."'";
 
 		dol_syslog(__METHOD__, LOG_DEBUG);
 		$resql = $this->db->query($sql);
@@ -446,9 +446,9 @@ class ActionsDolistorextract
 				if ($resfetch > 0) {
 					if($resfetch > 1) { // Plusieurs contacts avec cette adresse, donc potentiellement plusieurs tiers, on prend le plus ancien
 						$q = 'SELECT s.rowid
-								FROM '.MAIN_DB_PREFIX.'societe s
-								INNER JOIN '.MAIN_DB_PREFIX.'socpeople sp ON (sp.fk_soc = s.rowid)
-								WHERE sp.email = "'.$datas['buyer_email'].'"
+								FROM '.$this->db->prefix().'societe s
+								INNER JOIN '.$this->db->prefix().'socpeople sp ON (sp.fk_soc = s.rowid)
+								WHERE sp.email = "'.strval($datas['buyer_email']).'"
 								ORDER BY s.rowid ASC
 								LIMIT 1';
 						$resql = $this->db->query($q);
