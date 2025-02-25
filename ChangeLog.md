@@ -4,11 +4,11 @@
 
 ## Release 1.5 (CAP-REL)
 
+- FIX : Compat V20 & V21 - *24/02/2025* - 1.5.1
 - Compat Dolibarr 18
 - Compat with dolistore 2025
 
 ## Release 1.4
-- FIX : Compat V20 & V21 - *24/02/2025* - 1.4.3
 - FIX : Addition of a check to prevent several emails from the same order from being processed several times (DA025745) - 1.4.2 - *30/12/2024*
 - FIX : Select user pour import init websale + ajout des dates d'achats dans msg d'erreurs - 1.4.1 - *25/09/2024*
 - NEW : Ajout de la gestion de l'onglet vente d'un module + Script init onglet vente module - 1.4.0 - *17/09/2024*

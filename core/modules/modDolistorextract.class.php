@@ -68,7 +68,7 @@ class modDolistorextract extends DolibarrModules
 		$this->editor_url = 'https://www.atm-consulting.fr';
 
 		// Possible values for version are: 'development', 'experimental', 'dolibarr', 'dolibarr_deprecated' or a version string like 'x.y.z'
-		$this->version = '1.5.0';
+		$this->version = '1.5.1';
 		// Key used in llx_const table to save module status enabled/disabled (where MYMODULE is value of property name of module in uppercase)
 		$this->const_name = 'MAIN_MODULE_'.strtoupper($this->name);
 		// Name of image file used for this module.
@@ -112,7 +112,7 @@ class modDolistorextract extends DolibarrModules
 		$this->requiredby = array();	// List of module ids to disable if this one is disabled
 		$this->conflictwith = array();	// List of module class names as string this module is in conflict with
 		$this->phpmin = array(7,0);					// Minimum version of PHP required by module
-		$this->need_dolibarr_version = array(18,0);	// Minimum version of Dolibarr required by module
+		$this->need_dolibarr_version = array(19,0);	// Minimum version of Dolibarr required by module
 		$this->langfiles = array("dolistorextract@dolistorextract");
 
 		// Constants
