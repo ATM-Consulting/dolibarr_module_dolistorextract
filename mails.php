@@ -229,9 +229,9 @@ if ($action == 'read') {
 	$listProductString = implode(', ', $listProduct);
 	$arraySubstitutionDolistore = [
 			'__DOLISTORE_ORDER_NAME__' => $dolistoreMail->order_name,
-			'__DOLISTORE_INVOICE_FIRSTNAME__' => $dolistoreMail->invoice_firstname,
-			'__DOLISTORE_INVOICE_COMPANY__' => $dolistoreMail->invoice_company,
-			'__DOLISTORE_INVOICE_LASTNAME__' => $dolistoreMail->invoice_lastname,
+			'__DOLISTORE_INVOICE_FIRSTNAME__' => $dolistoreMail->buyer_firstname,
+			'__DOLISTORE_buyer_company__' => $dolistoreMail->buyer_company,
+			'__DOLISTORE_INVOICE_LASTNAME__' => $dolistoreMail->buyer_lastname,
 	        '__DOLISTORE_LIST_PRODUCTS__' => $listProductString
 	];
 
@@ -317,17 +317,17 @@ foreach($emails as $email) {
 
 		// Company
 		print '<td>';
-		print $datasCustomer['invoice_company'];
+		print $datasCustomer['buyer_company'];
 		print '</td>';
 
 		// Email
 		print '<td>';
-		print $datasCustomer['email'];
+		print $datasCustomer['buyer_email'];
 		print '</td>';
 
 		// Contact name
 		print '<td>';
-		print $datasCustomer['invoice_lastname'].' '.$datasCustomer['invoice_firstname'];
+		print $datasCustomer['buyer_lastname'].' '.$datasCustomer['buyer_firstname'];
 		print '</td>';
 
 		// Read / unread

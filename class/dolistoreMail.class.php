@@ -26,19 +26,20 @@ require_once DOL_DOCUMENT_ROOT.'/categories/class/categorie.class.php';
 class dolistoreMail
 {
 
-	public $invoice_company= '';
-	public $invoice_firstname= '';
-	public $invoice_lastname= '';
-	public $invoice_address1= '';
-	public $invoice_address2= '';
-	public $invoice_city= '';
-	public $invoice_postal_code= '';
-	public $invoice_country= '';
-	public $invoice_state= '';
-	public $invoice_phone= '';
-	public $email= '';
+	public $buyer_company= '';
+	public $buyer_firstname= '';
+	public $buyer_lastname= '';
+	public $buyer_address1= '';
+	public $buyer_address2= '';
+	public $buyer_city= '';
+	public $buyer_postal_code= '';
+	public $buyer_country= '';
+	public $buyer_country_code='';
+	public $buyer_state= '';
+	public $buyer_phone= '';
+	public $buyer_email= '';
 	public $order_name= '';
-	public $currency= '';
+	public $order_currency= '';
 	public $iso_code= '';
 
 	/**

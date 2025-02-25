@@ -30,48 +30,63 @@ class dolistoreMailExtract
 
 	/**
 	 *
-	 * @var string $htmlBody	Body of the message, HTML version
+	 * @var string $textBody	Body of the message, HTML version
 	 */
-	public $htmlBody;
+	public $textBody;
+
+	/**
+	 *
+	 * @var json $json data extracted from text part of mail
+	 */
+	public $json;
 
 	/**
 	 * @param Db $db
-	 * @param string $htmlBody
+	 * @param string $textBody
 	 */
-	function __construct($db, $htmlBody = '')
+	function __construct($db, $textBody = '')
 	{
 		$this->db = $db;
-		if (!empty($htmlBody)) {
-			$this->htmlBody = $htmlBody;
+		if (!empty($textBody)) {
+			$this->textBody = $textBody;
+
+			//extract json part of end text
+			$lines = explode("\n", $this->textBody);
+			$jsonTxt = "";
+			foreach($lines as $line) {
+				if($jsonTxt != "")  {
+					$jsonTxt .= trim($line);
+				}
+				if(substr($line,0,1) == '{') {
+					$jsonTxt .= trim($line);
+				}
+
+			}
+			$this->json = json_decode($jsonTxt);
 		}
 	}
 
 	/**
 	 * Extract order data from message content
 	 *
-	 * Load DOM data from hidden div id="invoice_fulldata"
+	 * Load DOM data from hidden div id="buyer_fulldata"
 	 *
 	 * Return an array with keys and values extracted
 	 */
 	function extractOrderDatas()
 	{
-		if (empty($this->htmlBody)) {
+		if (empty($this->textBody)) {
 			return array();
 		}
 		$confDolExtract = new dolistorextractConfig();
-		$doc = new DOMDocument();
-		@$doc->loadHTML($this->htmlBody);
-		$xml = simplexml_import_dom($doc);
 
 		$extractDatas = array();
 
 		// Invoice informations
-		$datas = $xml->xpath('//div[@id="invoice_fulldata"]/span');
-		foreach ($datas as $data)
+		foreach ($confDolExtract->arrayExtractTags as $key)
 		{
-			$attribute = (string) $data->attributes()->class;
-			if (in_array($attribute, $confDolExtract->arrayExtractTags)) {
-				$extractDatas[$attribute] = (string) $data[0];
+			if(isset($this->json->{$key})) {
+				$extractDatas[$key] = $this->json->{$key};
 			}
 		}
 
@@ -87,44 +102,28 @@ class dolistoreMailExtract
 	 */
 	function extractProductsData()
 	{
-		if (empty($this->htmlBody)) {
+		if (empty($this->textBody)) {
 			return array();
 		}
 		$confDolExtract = new dolistorextractConfig();
-		$doc = new DOMDocument();
-		@$doc->loadHTML($this->htmlBody);
-		$xml = simplexml_import_dom($doc);
 
 		$extractProducts = array();
 
 		// Invoice informations
-		$datas = $xml->xpath('//table[@class="table table-recap"]/tbody/tr[@class="item_data"]');
 		$i=0;
 
-		// tr
-		foreach ($datas as $row)
-		{
-			$extractProducts[$i] = array();
-			// Cells
-			foreach( $row as $cell) {
-				if ($cell->span) {
-					$attribute = (string) $cell->span->attributes()->class;
-					if (in_array($attribute, $confDolExtract->arrayExtractTagsProduct)) {
-						$extractProducts[$i][$attribute] = (string) $cell->span;
-					}
-				} else if ($cell->strong->span) { // Case for product title
-					$extractProducts[$i]['item_name'] = (string) $cell->strong->span;
-				}
-			}
-			++$i;
-		}
-		foreach($extractProducts as $key => &$lineprod) {
-			$ref = $lineprod["item_reference"];
-			// Test if module is our. Else we unset the line
-			if(!preg_match("/^c458/", $ref)) {
-				unset($extractProducts[$key]);
+		// print "<p>List to search is " . json_encode($confDolExtract->arrayExtractTagsProduct) . "</p>";
+
+		//dolistore 2025 = 1 mail per ordered product
+		$extractProducts[$i] = array();
+
+		foreach($confDolExtract->arrayExtractTagsProduct as $key) {
+			if(isset($this->json->{$key})) {
+				$extractProducts[$i][$key] = $this->json->{$key};
 			}
 		}
+
+		// print "Extract products = " . json_encode($extractProducts);
 		return $extractProducts;
 	}
 
@@ -132,7 +131,7 @@ class dolistoreMailExtract
 	/**
 	 * Extract all datas
 	 *
-	 * Extract all datas from $this->htmlBody and return an array which contains one keys `items` for products listing
+	 * Extract all datas from $this->textBody and return an array which contains one keys `items` for products listing
 	 * @return array
 	 */
 	public function extractAllDatas()
@@ -144,9 +143,9 @@ class dolistoreMailExtract
 			$datas['items'] = $lines;
 		}
 
-		if(empty($datas['invoice_company'])) {
-			if(!empty($datas['invoice_lastname']) && !empty($datas['invoice_firstname'])) {
-				$datas['invoice_company'] = $datas['invoice_firstname'].' '.$datas['invoice_lastname'];
+		if(empty($datas['buyer_company'])) {
+			if(!empty($datas['buyer_lastname']) && !empty($datas['buyer_firstname'])) {
+				$datas['buyer_company'] = $datas['buyer_firstname'].' '.$datas['buyer_lastname'];
 			}
 		}
 
@@ -174,86 +173,4 @@ class dolistoreMailExtract
 		return $foundLang;
 	}
 
-	/**
-	 * Extract customer data from plain text mail
-	 *
-	 * @param string $textPlain Text message, plain format
-	 * @param string $lang Lang code
-	 * @return array
-	 */
-	public static function extractCustomerDatasFromText($textPlain, $lang = '')
-	{
-		$customerDatas = array();
-		$arrayLines = explode("\n", $textPlain);
-		$confDolExtract = new dolistorextractConfig();
-
-
-		// Search in each line if match found for datas
-		for ($i=0; $i < count($arrayLines); $i++) {
-
-			$line = $arrayLines[$i];
-			if ($line == "") continue;
-
-			switch ($lang) {
-				case 'fr_FR' || 'es_ES':
-
-				    if (preg_match($confDolExtract->arrayPatternMailThirdpartyMap[${lang}], $line, $matches)) {
-						$emailExtract = "";
-
-						// string contains "THIRDPARTY CONTACT_NAME (EMAIL)
-						$coordAll = $matches[1];
-
-						// Extract email : text between () chars
-						if (preg_match('/.*\((.*)\)/', $coordAll, $matchMail)) {
-							$customerDatas['email'] =  $matchMail[1];
-						}
-						// Extract all not between () chars
-						if (preg_match('/(.*)\(.*@.*\)/', $coordAll, $matchName)) {
-							$customerDatas['contact_name'] =  trim($matchName[1]);
-						}
-
-
-					}
-
-					break;
-
-				case "en_US":
-
-					if (preg_match('/A new order was placed on DoliStore from the following customer/', $line)) {
-						$emailExtract = "";
-
-						// In english mail contains a new line for customer data
-						$coordAll = $arrayLines[${i}+1];
-
-						// Extract email : text between () chars
-						if (preg_match('/.*\((.*)\)/', $coordAll, $matchMail)) {
-							$customerDatas['email'] =  $matchMail[1];
-						}
-
-						// Extract all not between () chars
-						if (preg_match('/(.*)\(.*@.*\)/', $coordAll, $matchName)) {
-							$customerDatas['contact_name'] =  trim($matchName[1]);
-						}
-
-					}
-					break;
-				default:
-					print 'pas de regex pour lang='.$lang;
-					break;
-
-			}
-		}
-		return $customerDatas;
-	}
-
-
-	public static function extractOrderDatasFromSubject($subject)
-	{
-		$orderDatas = array();
-		if (preg_match('/.*[°#]([0-9]+) - ([A-Z]+)/', $subject, $matches)) {
-			$orderDatas['id'] = $matches[1];
-			$orderDatas['ref'] = $matches[2];
-		}
-		return $orderDatas;
-	}
 }
