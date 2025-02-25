@@ -2,11 +2,11 @@
 
 ## Unreleased
 
-## Release 1.5 (CAP-REL)
+## Release 1.5 
 
-- FIX : Compat V20 & V21 - *24/02/2025* - 1.5.1
-- Compat Dolibarr 18
-- Compat with dolistore 2025
+- NEW : 
+    Compat V20 & V21 
+    Merge modification about mail structure - *25/02/2025* - 1.5.0
 
 ## Release 1.4
 - FIX : Addition of a check to prevent several emails from the same order from being processed several times (DA025745) - 1.4.2 - *30/12/2024*
