@@ -33,7 +33,7 @@ use SSilence\ImapClient\ImapClient as Imap;
  *    \class      ActionsTicketsup
  *    \brief      Class Actions of the module dolistorextract
  */
-class ActionsDolistorextract
+class ActionsDolistorextract extends CommonHookActions
 {
 	public $db;
 	public $dao;
