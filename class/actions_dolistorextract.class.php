@@ -181,7 +181,7 @@ class ActionsDolistorextract extends CommonHookActions
 	 */
 	public function searchCategoryDolistore($productRef)
 	{
-		$sql = "SELECT fk_object FROM ".$this->db->prefix()."categories_extrafields WHERE ref_dolistore='".strval($productRef)."'";
+		$sql = "SELECT fk_object FROM ".$this->db->prefix()."categories_extrafields WHERE ref_dolistore='".$this->db->escape($productRef)."'";
 
 		dol_syslog(__METHOD__, LOG_DEBUG);
 		$resql = $this->db->query($sql);
@@ -249,7 +249,7 @@ class ActionsDolistorextract extends CommonHookActions
 
 	private function isAlreadyImported($noteString)
 	{
-		$sql = "SELECT id FROM ".$this->db->prefix()."actioncomm WHERE note='".strval($noteString)."'";
+		$sql = "SELECT id FROM ".$this->db->prefix()."actioncomm WHERE note='".$this->db->escape($noteString)."'";
 
 		dol_syslog(__METHOD__, LOG_DEBUG);
 		$resql = $this->db->query($sql);

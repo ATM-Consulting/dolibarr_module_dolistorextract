@@ -230,7 +230,7 @@ if ($action == 'read') {
 	$arraySubstitutionDolistore = [
 			'__DOLISTORE_ORDER_NAME__' => $dolistoreMail->order_name,
 			'__DOLISTORE_INVOICE_FIRSTNAME__' => $dolistoreMail->buyer_firstname,
-			'__DOLISTORE_buyer_company__' => $dolistoreMail->buyer_company,
+			'__DOLISTORE_BUYER_COMPANY__' => $dolistoreMail->buyer_company,
 			'__DOLISTORE_INVOICE_LASTNAME__' => $dolistoreMail->buyer_lastname,
 	        '__DOLISTORE_LIST_PRODUCTS__' => $listProductString
 	];
