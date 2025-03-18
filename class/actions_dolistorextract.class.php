@@ -530,7 +530,7 @@ class ActionsDolistorextract extends CommonHookActions
 							$catStatic->add_type($socStatic,'customer');
 
 							// Event creation
-							$result = $dolistorextractActions->createEventFromExtractDatas($product, $dolistoreMail->order_name, $socid);
+							$result = $dolistorextractActions->createEventFromExtractDatas($product, $dolistoreMail->order_ref, $socid);
 
 							if ($result > 0) {
 								$mailToSend = true;

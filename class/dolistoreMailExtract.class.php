@@ -52,8 +52,11 @@ class dolistoreMailExtract
 
 			//extract json part of end text
 			$lines = explode("\n", $this->textBody);
-			$jsonTxt = "";
+			$jsonTxt = '';
 			foreach($lines as $line) {
+
+				$line = str_replace(["\r", "\n"], "", $line);
+
 				if($jsonTxt != "")  {
 					$jsonTxt .= trim($line);
 				}
@@ -61,8 +64,14 @@ class dolistoreMailExtract
 					$jsonTxt .= trim($line);
 				}
 
+				if(substr($line,-1) == '}') {
+					break;
+				}
+
 			}
-			$this->json = json_decode($jsonTxt);
+
+			$test = json_decode($jsonTxt,true);
+			$this->json = json_decode($jsonTxt,true);
 		}
 	}
 
@@ -85,8 +94,8 @@ class dolistoreMailExtract
 		// Invoice informations
 		foreach ($confDolExtract->arrayExtractTags as $key)
 		{
-			if(isset($this->json->{$key})) {
-				$extractDatas[$key] = $this->json->{$key};
+			if(isset($this->json[$key])) {
+				$extractDatas[$key] = $this->json[$key];
 			}
 		}
 
@@ -118,8 +127,8 @@ class dolistoreMailExtract
 		$extractProducts[$i] = array();
 
 		foreach($confDolExtract->arrayExtractTagsProduct as $key) {
-			if(isset($this->json->{$key})) {
-				$extractProducts[$i][$key] = $this->json->{$key};
+			if(isset($this->json[$key])) {
+				$extractProducts[$i][$key] = $this->json[$key];
 			}
 		}
 
