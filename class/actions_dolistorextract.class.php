@@ -115,7 +115,7 @@ class ActionsDolistorextract extends CommonHookActions
 			$res=dol_include_once($dirroot.$module.'.php');
 			if ($res) break;
 		}
-		$modCodeClient = new $module;
+		$modCodeClient = new $module($this->db);
 
 		$socStatic->code_client = $modCodeClient->getNextValue($socStatic,0);
 		$socStatic->name = $dolistoreMail->buyer_company;
