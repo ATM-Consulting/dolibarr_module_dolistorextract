@@ -4,9 +4,7 @@
 
 ## Release 1.5 
 
-- NEW : 
-    Compat V20 & V21 
-    Merge modification about mail structure - *25/02/2025* - 1.5.0
+- NEW : Compat V20 & V21 & Merge modification about mail structure - 1.5.0 - *25/02/2025*
 
 ## Release 1.4
 - FIX : Addition of a check to prevent several emails from the same order from being processed several times (DA025745) - 1.4.2 - *30/12/2024*
