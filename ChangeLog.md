@@ -1,9 +1,9 @@
 # Change log for DolistoreExtract
 
 ## Unreleased
+
+## Release 1.5
 - NEW : Compat V20 & V21 & Merge modification about mail structure - 1.5.0 - *25/02/2025*
-
-
 
 ## Release 1.4
 - FIX : Addition of a check to prevent several emails from the same order from being processed several times (DA025745) - 1.4.2 - *30/12/2024*
@@ -11,7 +11,6 @@
 - NEW : Ajout de la gestion de l'onglet vente d'un module + Script init onglet vente module - 1.4.0 - *17/09/2024*
 
 ## Release 1.3
-
 - FIX : Warning PHP 8.2 - 1.3.1 - *25/03/2024*
 - NEW : compatibility to v19 and php8 - 1.3 - *07/03/2024*
   Attention perte compatibilité inférieure V19
