@@ -60,7 +60,7 @@ class modDolistorextract extends DolibarrModules
 		//$this->familyinfo = array('myownfamily' => array('position' => '001', 'label' => $langs->trans("MyOwnFamily")));
 
 		// Module label (no space allowed), used if translation string 'ModuleXXXName' not found (where XXX is value of numeric property 'numero' of module)
-		$this->name = 'Dolistore extract';
+		$this->name = 'Dolistorextract';
 		// Module description, used if translation string 'ModuleXXXDesc' not found (where XXX is value of numeric property 'numero' of module)
 		$this->description = "Module d'extraction des ventes Dolistore des Modules";
 		$this->descriptionlong = "";
