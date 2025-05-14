@@ -21,11 +21,11 @@
 /**
  *
  * @author jfefe
- *        
+ *
  */
 class dolistorextractConfig
 {
-    
+
     /**
      * Array to store keys to extract data about email
      *
@@ -33,49 +33,50 @@ class dolistorextractConfig
      */
     public $arrayExtractTags = array(
         //ARRAY_EXTRACT_TAGS
-        'invoice_company',
-        'invoice_firstname',
-        'invoice_lastname',
-        'invoice_address1',
-        'invoice_address2',
-        'invoice_city',
-        'invoice_postal_code',
-        'invoice_country',
-        'invoice_state',
-        'invoice_phone',
-        'email',
-        'order_name',
-        'currency',
+        'buyer_company',
+        'buyer_firstname',
+        'buyer_lastname',
+        'buyer_address1',
+        'buyer_address2',
+        'buyer_city',
+        'buyer_postal_code',
+        'buyer_country',
+        'buyer_country_code',
+        'buyer_state',
+        'buyer_phone',
+        'buyer_email',
+        'order_ref',
+        'order_currency',
         'iso_code'
     );
-    
+
     /**
      * Array to store keys to extract data for product
      * @var array
      */
     public $arrayExtractTagsProduct = array(
-    //ARRAY_EXTRACT_TAGS_PRODUCT 
+    //ARRAY_EXTRACT_TAGS_PRODUCT
         'item_reference',
         'item_name',
         'item_price',
         'item_quantity',
         'item_price_total'
     );
-    
+
     /**
      * Map for pattern title and related lang
      */
     public $arrayTitleTranslationMap = array(
-    //ARRAY_TITLE_TRANSLATION_MAP 
-        'New order' => 'en_US',
-        'Nouvelle commande' => 'fr_FR',
+    //ARRAY_TITLE_TRANSLATION_MAP
+        'Order notification' => 'en_US',
+        'Notification de commande' => 'fr_FR',
         'Nuevo pedido' => 'es_ES',
-        'Nuovo ordine' => 'it_IT',
-        'Neue Bestellung' => 'de_DE'
+        'Notifica ordine' => 'it_IT',
+        'Bestellbenachrichtigung' => 'de_DE'
     );
-    
+
     public $arrayPatternMailThirdpartyMap = array(
-    //ARRAY_PATTERN_MAIL_THIRDPARTY_MAP 
+    //ARRAY_PATTERN_MAIL_THIRDPARTY_MAP
         'en_US' => '/DoliStore par ce client : (.*)/',
         'fr_FR' => '/DoliStore par ce client : (.*)/',
         'es_ES' => '/cliente : (.*)/'
@@ -85,8 +86,8 @@ class dolistorextractConfig
      */
     public function __construct()
     {
-        
+
     }
-    
+
 }
 

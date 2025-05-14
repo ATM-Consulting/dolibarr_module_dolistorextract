@@ -102,7 +102,7 @@ if ($reshook < 0) setEventMessages($hookmanager->error, $hookmanager->errors, 'e
 
 if (empty($reshook))
 {
-	
+
 }
 
 
@@ -118,9 +118,9 @@ llxHeader('', $langs->trans('DolistoreMailsList'),'');
 
 $form=new Form($db);
 
-$mailbox = $conf->global->DOLISTOREXTRACT_IMAP_SERVER;
-$username = $conf->global->DOLISTOREXTRACT_IMAP_USER;
-$password = $conf->global->DOLISTOREXTRACT_IMAP_PWD;
+$mailbox = getDolGlobalString('DOLISTOREXTRACT_IMAP_SERVER');
+$username = getDolGlobalString('DOLISTOREXTRACT_IMAP_USER');
+$password = getDolGlobalString('DOLISTOREXTRACT_IMAP_PWD');
 $encryption = Imap::ENCRYPT_SSL;
 
 // Open connection
@@ -141,7 +141,7 @@ $imap->selectFolder('INBOX');
  */
 if ($action == 'import') {
 	$email = $imap->getMessage((int) $id);
-	
+
 	$dolistorextractActions = new \ActionsDolistorextract($db);
 	$res = $dolistorextractActions->launchImportProcess($email);
 	$action = 'read';
@@ -154,7 +154,7 @@ if ($action == 'read') {
 	print load_fiche_titre($langs->trans('DolistoreMailShow'));
 
 	$email = $imap->getMessage((int) $id);
-	
+
 	if ($view == 'plain') {
 		print '<pre>';
 		print $email->message->plain;
@@ -165,110 +165,93 @@ if ($action == 'read') {
 	}
 	$socStatic = new Societe($db);
 	$formMail = new FormMail($db);
-	
-	
+
+
 	$dolistoreMailExtract = new \dolistoreMailExtract($db, $email->message->html);
 	$datas = $dolistoreMailExtract->extractAllDatas();
 	$langEmail = $dolistoreMailExtract->detectLang($email->header->subject);
-	
+
 	$dolistoreMail = new \dolistoreMail();
 	$dolistorextractActions = new \ActionsDolistorextract($db);
-	
+
 	$dolistoreMail->setDatas($datas);
-	
+
 	// Search exactly by name
 	$filterSearch = array();
-    if(floatval(DOL_VERSION) <= 8.0) {
-        $searchSoc = $socStatic->searchByName($datas['invoice_company'], 0, $filterSearch); // Retourne un tableau ou -1 en cas d'erreur
-    }
-    else {
-        $searchSoc = $socStatic->fetch('', $datas['invoice_company']);  // Retourne -2 si on trouve plusieurs Tiers
-    }
+
+	$searchSoc = $socStatic->fetch('', $datas['invoice_company']);  // Retourne -2 si on trouve plusieurs Tiers
+
 	if($searchSoc < 0) {
 		print "Erreur recherche client";
-	
-	} else {
-        if(floatval(DOL_VERSION) <= 8.0) {
-            // Customer found
-            if(count($searchSoc) > 0) {
-                $socid = $searchSoc[0]->id;
-                $socStatic->fetch($socid);
 
-                print 'Client trouvé : '.$socStatic->getNomUrl(1).'<br />';
-            }
-            else {
-                print '<strong>Client non trouvé!</strong><br />';
-            }
-        }
-        else {
-            print 'Client trouvé : '.$socStatic->getNomUrl(1).'<br />';
-        }
+	} else {
+		print 'Client trouvé : '.$socStatic->getNomUrl(1).'<br />';
 	}
 	$listProduct = array();
 	// Category management
 	foreach ($dolistoreMail->items as $product) {
 	    // Save list of products for email message
 	    $listProduct[] = $product['item_name'];
-	    
+
 		$foundCatId = 0;
 		$resultCat = $dolistorextractActions->searchCategoryDolistore($product['item_reference']);
 		if(! $resultCat) {
 			//echo 'Pas de catégorie dolistore trouvée pour la ref='.$product['item_reference'].'<br />';
 			dol_syslog('No category found for ref='.$product['item_reference'], LOG_WARNING);
-			
+
 			// Search by label
 			$catStatic = new Categorie($db);
 			$resLabel = $catStatic->fetch('', $product['item_name']);
 			if($resLabel > 0) {
-				$foundCatId = $catStatic->id;				
+				$foundCatId = $catStatic->id;
 			}
 		} else {
 			$foundCatId = $resultCat;
 			//echo "Catégorie dolistore trouvée pour ref ".$product['item_reference']." (".$product['item_name'].") : ".$resultCat;
 		}
-		
+
 		if ($foundCatId) {
 			$catStatic = new Categorie($db);
 			$res = $catStatic->fetch($foundCatId);
 			echo "<br />Catégorie trouvée pour ref ".$product['item_reference']." (".$product['item_name'].") : ".$catStatic->getNomUrl(1);
 		}
 	}
-	
+
 	print '<br />';
 	print 'Langue du mail : '.$langEmail;
-		
+
 	// EN template by default
-	$idTemplate = $conf->global->DOLISTOREXTRACT_EMAIL_TEMPLATE_EN;
+	$idTemplate = getDolGlobalInt('DOLISTOREXTRACT_EMAIL_TEMPLATE_EN');
 	if(preg_match('/fr.*/', $langEmail)) {
-		$idTemplate = $conf->global->DOLISTOREXTRACT_EMAIL_TEMPLATE_FR;
+		$idTemplate = getDolGlobalInt('DOLISTOREXTRACT_EMAIL_TEMPLATE_FR');
 	}
 	$usedTemplate = $formMail->getEMailTemplate($db, 'dolistore_extract', $user, '',$idTemplate);
 	$listProductString = implode(', ', $listProduct);
 	$arraySubstitutionDolistore = [
 			'__DOLISTORE_ORDER_NAME__' => $dolistoreMail->order_name,
-			'__DOLISTORE_INVOICE_FIRSTNAME__' => $dolistoreMail->invoice_firstname,
-			'__DOLISTORE_INVOICE_COMPANY__' => $dolistoreMail->invoice_company,
-			'__DOLISTORE_INVOICE_LASTNAME__' => $dolistoreMail->invoice_lastname,
+			'__DOLISTORE_INVOICE_FIRSTNAME__' => $dolistoreMail->buyer_firstname,
+			'__DOLISTORE_BUYER_COMPANY__' => $dolistoreMail->buyer_company,
+			'__DOLISTORE_INVOICE_LASTNAME__' => $dolistoreMail->buyer_lastname,
 	        '__DOLISTORE_LIST_PRODUCTS__' => $listProductString
 	];
-		
+
 	$subject=make_substitutions($usedTemplate->topic, $arraySubstitutionDolistore);
 	$message=make_substitutions($usedTemplate->content, $arraySubstitutionDolistore);
 	print '<br />Sujet du mail : '.$subject;
 	print '<br />Texte du mail : '.$message;
-	
+
 	print '<strong>Données extraites</strong><br/>';
 	print '<pre>';
-	
+
 	var_dump($dolistoreMail);
-	
+
 	print '<div class="center">';
 	// TODO: check if already imported
 	print '<a class="button" href="'.$_SERVER['PHP_SELF'].'?action=import&id='.$id.'">Import</a>';
-	
-	
+
+
 	print '<a class="button" href="'.$_SERVER['PHP_SELF'].'">Fermer</a>';
-	
+
 	print '</div>';
 
 }
@@ -300,71 +283,71 @@ print '<th>Actions</th>';
 print '</tr>';
 
 foreach($emails as $email) {
-	
+
 	$mailExtract = new \dolistoreMailExtract($db, $email->message->html);
-	
+
 	// Seulement les mails en provenance de dolistore
 	if (strpos($email->header->subject, 'DoliStore') > 0) {
-		
+
 		$langEmail = dolistoreMailExtract::detectLang($email->header->subject);
 		$datasCustomer = $mailExtract->extractOrderDatas();
 		$datasOrder = dolistoreMailExtract::extractOrderDatasFromSubject($email->header->subject, $langEmail);
-		
+
 		print '<tr>';
-		
+
 		// Date
 		print '<td>';
 		print $email->header->date;
 		print '</td>';
-		
+
 		// ID
 		print '<td>';
 		print $datasOrder['id'];
 		print '</td>';
-		
+
 		// ref
 		print '<td>';
 		print $datasOrder['ref'];
 		print '</td>';
-		
+
 		// Lang
 		print '<td>';
 		print picto_from_langcode($langEmail);
 		print '</td>';
-		
+
 		// Company
 		print '<td>';
-		print $datasCustomer['invoice_company'];
+		print $datasCustomer['buyer_company'];
 		print '</td>';
-		
+
 		// Email
 		print '<td>';
-		print $datasCustomer['email'];
+		print $datasCustomer['buyer_email'];
 		print '</td>';
-		
+
 		// Contact name
 		print '<td>';
-		print $datasCustomer['invoice_lastname'].' '.$datasCustomer['invoice_firstname'];
+		print $datasCustomer['buyer_lastname'].' '.$datasCustomer['buyer_firstname'];
 		print '</td>';
-		
+
 		// Read / unread
 		print '<td>';
 		print $email->header->details->Unseen == "U" ? 'Non lu' : 'Lu';
 		print '</td>';
-		
+
 		// Actions
 		print '<td>';
 		print '<a href="'.$_SERVER['PHP_SELF'].'?action=read&view=plain&id='.$email->header->msgno.'">Voir</a>';
 		//print '<a href="'.$_SERVER['PHP_SELF'].'?action=read&view=html&id='.$email->header->uid.'">HTML</a>';
 		print '</td>';
-		
+
 		print '</tr>';
 	}
-	
+
 }
 print '<table>';
 
-	
+
 }
 
 // End of page
