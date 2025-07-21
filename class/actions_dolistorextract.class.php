@@ -31,8 +31,10 @@ use SSilence\ImapClient\ImapClient as Imap;
 
 
 /**
- *    \class      ActionsTicketsup
- *    \brief      Class Actions of the module dolistorextract
+ * Class ActionsDolistorextract
+ *
+ * Provides hooks and main processing logic for the Dolistore Extract Dolibarr module.
+ * Handles automated extraction of sales/orders from Dolistore emails and integration in Dolibarr (thirdparties, contacts, events, webmodule sales).
  */
 class ActionsDolistorextract extends CommonHookActions
 {
@@ -60,13 +62,13 @@ class ActionsDolistorextract extends CommonHookActions
 	}
 
 	/**
-	 * Hook to add email element template
+	 * Hook: Provides additional info to the email element list.
 	 *
-	 * @param array 		$parameters
-	 * @param Object 		$object
-	 * @param string 		$action
-	 * @param HookManager 	$hookmanager
-	 * @return int
+	 * @param array        $parameters  Parameters from hook manager
+	 * @param object       $object      Current Dolibarr object
+	 * @param string       $action      Current action code
+	 * @param HookManager  $hookmanager Hook manager instance
+	 * @return int 0 if OK, -1 if error
 	 */
 	public function emailElementlist($parameters, &$object, &$action, $hookmanager)
 	{
@@ -87,11 +89,11 @@ class ActionsDolistorextract extends CommonHookActions
 	}
 
 	/**
-	 * Create a new customer with email datas
+	 * Creates a new thirdparty/customer from extracted Dolistore email data.
 	 *
-	 * @param User $user
-	 * @param dolistoreMail $dolistoreMail
-	 * @return int ID of created customer
+	 * @param User          $user           User used to create the thirdparty
+	 * @param dolistoreMail $dolistoreMail  Mail object with extracted customer fields
+	 * @return int                          Thirdparty rowid, or -1 if creation failed
 	 */
 	public function newCustomerFromDatas(User $user, dolistoreMail $dolistoreMail)
 	{
@@ -152,11 +154,13 @@ class ActionsDolistorextract extends CommonHookActions
 	}
 
 	/**
-	 * Create an event
+	 * Creates a Dolibarr calendar event (actioncomm) for a sold product extracted from Dolistore mail.
+	 * Detects and avoids duplicate events based on a tag in the event note.
 	 *
-	 * @param array $extractDatas Array fil
-	 * @param string $socid
-	 * @return number
+	 * @param array  $productDatas  Product/item array (extracted from email)
+	 * @param string $orderRef      Dolistore order reference
+	 * @param int    $socid         Thirdparty/Customer rowid
+	 * @return int|false            New event rowid, 0 if already exists, -1 if error
 	 */
 	public function createEventFromExtractDatas($productDatas, $orderRef, $socid)
 	{
@@ -198,6 +202,12 @@ class ActionsDolistorextract extends CommonHookActions
 		return $res;
 	}
 
+	/**
+	 * Checks if an event has already been imported, by searching for a specific tag in note field.
+	 *
+	 * @param string $noteString Tag/note to search (e.g., 'ORDER:...:...')
+	 * @return int|false Rowid if exists, false if not, -1 if error
+	 */
 	private function isAlreadyImported($noteString)
 	{
 		$sql = "SELECT id FROM " . $this->db->prefix() . "actioncomm WHERE note='" . $this->db->escape($noteString) . "'";
@@ -220,7 +230,10 @@ class ActionsDolistorextract extends CommonHookActions
 	}
 
 	/**
-	 * Method to launch CRON job to import data from emails
+	 * Main CRON job: connect to IMAP, fetch emails, launch processing, update mailbox status.
+	 * Orchestrates the full import process.
+	 *
+	 * @return int Positive number of sales if success, negative number of errors, or 0 if no email
 	 */
 	public function launchCronJob()
 	{
@@ -366,10 +379,12 @@ class ActionsDolistorextract extends CommonHookActions
 			}
 		}
 	}
+
 	/**
-	 * Launch all import process
-	 * @param array $emails Array of emails from imap fetch
-	 * @return array|int Array with order_ref => success status (true/false) or negative value if KO
+	 * Core integration logic: reads emails, extracts orders, creates customers, contacts, events, and sales.
+	 *
+	 * @param array $emails Array of Dolistore IMAP emails (SSilence\ImapClient\Message[])
+	 * @return array|int    Array of order_ref => success(bool) or int <0 if failure
 	 */
 	public function launchImportProcess($emails)
 	{
@@ -700,11 +715,11 @@ class ActionsDolistorextract extends CommonHookActions
 	}
 
 	/**
-	 * Adds a web module sale to the database.
+	 * Adds a Dolibarr webmodule sale to the database, based on extracted product data and customer.
 	 *
-	 * @param array $TItemDatas Array containing the item data (price, quantity, reference).
-	 * @param int $socid ID of the company associated with the sale.
-	 * @return int Returns the ID of the created sale or <= 0 in case of failure.
+	 * @param array $TItemDatas Array containing item data (reference, name, price, quantity, etc.)
+	 * @param int   $socid      Customer rowid
+	 * @return int  ID of the created sale, or <=0 if failed
 	 */
 	public function addWebmoduleSales(array $TItemDatas, int $socid): int
 	{
@@ -749,10 +764,10 @@ class ActionsDolistorextract extends CommonHookActions
 	}
 
 	/**
-	 * Retrieves the web module ID based on the Dolistore ID.
+	 * Retrieves the webmodule rowid from Dolistore ID (using extrafields linkage).
 	 *
-	 * @param string $fk_dolistore Dolistore ID.
-	 * @return int Web module ID or 0 if not found.
+	 * @param string $fk_dolistore Dolistore product reference
+	 * @return int                 Webmodule rowid, or 0 if not found
 	 */
 	public function getWebmoduleIdByDolistoreId(string $fk_dolistore): int
 	{
@@ -812,7 +827,7 @@ class ActionsDolistorextract extends CommonHookActions
 	/**
 	 * Logs an error message, adds it to the error array, and increments the error count.
 	 *
-	 * @param string $message The error message to log.
+	 * @param string $message The error message to log
 	 * @return void
 	 */
 	private function logError(string $message): void
