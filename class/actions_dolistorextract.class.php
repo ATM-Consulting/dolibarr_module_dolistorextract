@@ -529,8 +529,8 @@ class ActionsDolistorextract extends CommonHookActions
 
 						// Check if a contact with this email exists for this company
 						$contact = new Contact($this->db);
-						$sql = "SELECT rowid FROM " . $this->db->prefix() . "socpeople 
-								WHERE fk_soc = " . $companyId . " 
+						$sql = "SELECT rowid FROM " . $this->db->prefix() . "socpeople
+								WHERE fk_soc = " . $companyId . "
 								AND email = '" . $this->db->escape($orderDetails['buyer_data']['buyer_email']) . "'";
 						$resql = $this->db->query($sql);
 

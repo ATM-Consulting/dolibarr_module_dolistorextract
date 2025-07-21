@@ -50,28 +50,17 @@ class dolistoreMailExtract
 		if (!empty($textBody)) {
 			$this->textBody = $textBody;
 
-			//extract json part of end text
-			$lines = explode("\n", $this->textBody);
-			$jsonTxt = '';
-			foreach($lines as $line) {
+			$jsonTxt = str_replace(array("\r\n", "\n", "\r"), " ", $this->textBody);
 
-				$line = str_replace(["\r", "\n"], "", $line);
-
-				if($jsonTxt != "")  {
-					$jsonTxt .= trim($line);
-				}
-				if(substr($line,0,1) == '{') {
-					$jsonTxt .= trim($line);
-				}
-
-				if(substr($line,-1) == '}') {
-					break;
-				}
-
+			$start = strpos($jsonTxt, '{');
+			$end = strrpos($jsonTxt, '}');
+			if ($start !== false && $end !== false) {
+				$jsonTxt = substr($jsonTxt, $start, $end - $start + 1);
 			}
 
-			$test = json_decode($jsonTxt,true);
-			$this->json = json_decode($jsonTxt,true);
+			$jsonTxt = preg_replace('/\s+/', ' ', $jsonTxt);
+
+			$this->json = json_decode($jsonTxt, true);
 		}
 	}
 
