@@ -58,7 +58,8 @@ class dolistorextractCron
 		}
 
 		if($res >= 0) {
-			$this->output.= $res . ' ventes intégrées';
+			$this->output.= $dolistorextractActions->logOutput;
+			$this->output.= '<br/>' . $res . ' ventes intégrées';
 			return 0;
 		}
 	}
