@@ -45,6 +45,8 @@ class dolistorextractConfig
         'buyer_state',
         'buyer_phone',
         'buyer_email',
+		'buyer_idprof2',
+		'buyer_intravat',
         'order_ref',
         'order_currency',
         'iso_code'

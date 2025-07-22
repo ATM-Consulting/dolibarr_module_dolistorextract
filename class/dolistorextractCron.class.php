@@ -25,14 +25,14 @@ class dolistorextractCron
 
 	public $db;
 
-	function __construct(&$db) {
+	function __construct( DoliDB &$db) {
 		$this->db = $db;
 	}
 
 	/**
 	 * Method to call with CRON module
 	 */
-	public function runImport()
+	public function runImport() : int
 	{
 
 		global $conf, $langs, $db;
@@ -58,7 +58,8 @@ class dolistorextractCron
 		}
 
 		if($res >= 0) {
-			$this->output.= $res . ' ventes intégrées';
+			$this->output.= $dolistorextractActions->logOutput;
+			$this->output.= '<br/>' . $res . ' ventes intégrées';
 			return 0;
 		}
 	}

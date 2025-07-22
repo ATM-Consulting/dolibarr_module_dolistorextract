@@ -62,7 +62,7 @@ class dolistoreMail
 	 * @param array $datasOrderArray Array filled with \dolistoreMailExtract::extractOrderDatas()
 	 * @return number
 	 */
-	public function setDatas($datasOrderArray = array())
+	public function setDatas($datasOrderArray = array()) : int
 	{
 		if (empty($datasOrderArray)) {
 			return 0;
@@ -79,7 +79,7 @@ class dolistoreMail
 	 * @param array $extractProductDatas Array filled with \dolistoreMailExtract::extractProductsDatas()
 	 * @return number
 	 */
-	public function fetchProducts($extractProductDatas = array())
+	public function fetchProducts($extractProductDatas = array()) : int
 	{
 		if (empty($extractProductDatas)) {
 			return 0;

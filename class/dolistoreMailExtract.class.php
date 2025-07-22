@@ -44,34 +44,23 @@ class dolistoreMailExtract
 	 * @param Db $db
 	 * @param string $textBody
 	 */
-	function __construct($db, $textBody = '')
+	function __construct( DoliDB $db, string $textBody = '')
 	{
 		$this->db = $db;
 		if (!empty($textBody)) {
 			$this->textBody = $textBody;
 
-			//extract json part of end text
-			$lines = explode("\n", $this->textBody);
-			$jsonTxt = '';
-			foreach($lines as $line) {
+			$jsonTxt = str_replace(array("\r\n", "\n", "\r"), " ", $this->textBody);
 
-				$line = str_replace(["\r", "\n"], "", $line);
-
-				if($jsonTxt != "")  {
-					$jsonTxt .= trim($line);
-				}
-				if(substr($line,0,1) == '{') {
-					$jsonTxt .= trim($line);
-				}
-
-				if(substr($line,-1) == '}') {
-					break;
-				}
-
+			$start = strpos($jsonTxt, '{');
+			$end = strrpos($jsonTxt, '}');
+			if ($start !== false && $end !== false) {
+				$jsonTxt = substr($jsonTxt, $start, $end - $start + 1);
 			}
 
-			$test = json_decode($jsonTxt,true);
-			$this->json = json_decode($jsonTxt,true);
+			$jsonTxt = preg_replace('/\s+/', ' ', $jsonTxt);
+
+			$this->json = json_decode($jsonTxt, true);
 		}
 	}
 
@@ -82,7 +71,7 @@ class dolistoreMailExtract
 	 *
 	 * Return an array with keys and values extracted
 	 */
-	function extractOrderDatas()
+	function extractOrderDatas() : array
 	{
 		if (empty($this->textBody)) {
 			return array();
@@ -109,7 +98,7 @@ class dolistoreMailExtract
 	 *
 	 * @return array contains keys defined in self::ARRAY_EXTRACT_TAGS_PRODUCT
 	 */
-	function extractProductsData()
+	function extractProductsData() : array
 	{
 		if (empty($this->textBody)) {
 			return array();
@@ -143,7 +132,7 @@ class dolistoreMailExtract
 	 * Extract all datas from $this->textBody and return an array which contains one keys `items` for products listing
 	 * @return array
 	 */
-	public function extractAllDatas()
+	public function extractAllDatas() : array
 	{
 		$datas = $this->extractOrderDatas();
 		// Extract product data
@@ -168,7 +157,7 @@ class dolistoreMailExtract
 	 * @return string Langage code
 	 * @see dolistoreMailExtract::ARRAY_TITLE_TRANSLATION_MAP
 	 */
-	public static function detectLang($subject)
+	public static function detectLang( string $subject) : string
 	{
 		$foundLang = '';
 		$confDolExtract = new dolistorextractConfig();
