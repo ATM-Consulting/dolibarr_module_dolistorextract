@@ -25,14 +25,14 @@ class dolistorextractCron
 
 	public $db;
 
-	function __construct(&$db) {
+	function __construct( DoliDB &$db) {
 		$this->db = $db;
 	}
 
 	/**
 	 * Method to call with CRON module
 	 */
-	public function runImport()
+	public function runImport() : int
 	{
 
 		global $conf, $langs, $db;

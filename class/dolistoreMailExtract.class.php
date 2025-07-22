@@ -44,7 +44,7 @@ class dolistoreMailExtract
 	 * @param Db $db
 	 * @param string $textBody
 	 */
-	function __construct($db, $textBody = '')
+	function __construct( DoliDB $db, string $textBody = '')
 	{
 		$this->db = $db;
 		if (!empty($textBody)) {
@@ -71,7 +71,7 @@ class dolistoreMailExtract
 	 *
 	 * Return an array with keys and values extracted
 	 */
-	function extractOrderDatas()
+	function extractOrderDatas() : array
 	{
 		if (empty($this->textBody)) {
 			return array();
@@ -98,7 +98,7 @@ class dolistoreMailExtract
 	 *
 	 * @return array contains keys defined in self::ARRAY_EXTRACT_TAGS_PRODUCT
 	 */
-	function extractProductsData()
+	function extractProductsData() : array
 	{
 		if (empty($this->textBody)) {
 			return array();
@@ -132,7 +132,7 @@ class dolistoreMailExtract
 	 * Extract all datas from $this->textBody and return an array which contains one keys `items` for products listing
 	 * @return array
 	 */
-	public function extractAllDatas()
+	public function extractAllDatas() : array
 	{
 		$datas = $this->extractOrderDatas();
 		// Extract product data
@@ -157,7 +157,7 @@ class dolistoreMailExtract
 	 * @return string Langage code
 	 * @see dolistoreMailExtract::ARRAY_TITLE_TRANSLATION_MAP
 	 */
-	public static function detectLang($subject)
+	public static function detectLang( string $subject) : string
 	{
 		$foundLang = '';
 		$confDolExtract = new dolistorextractConfig();

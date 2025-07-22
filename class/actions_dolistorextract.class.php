@@ -55,7 +55,7 @@ class ActionsDolistorextract extends CommonHookActions
 	 *
 	 *    @param DoliDB $db Database handler
 	 */
-	public function __construct($db)
+	public function __construct( DoliDB $db)
 	{
 		$this->db = $db;
 	}
@@ -69,7 +69,7 @@ class ActionsDolistorextract extends CommonHookActions
 	 * @param HookManager  $hookmanager Hook manager instance
 	 * @return int 0 if OK, -1 if error
 	 */
-	public function emailElementlist($parameters, &$object, &$action, $hookmanager) : int
+	public function emailElementlist( array $parameters, object &$object, string &$action, HookManager $hookmanager) : int
 	{
 		global $langs;
 
@@ -242,7 +242,7 @@ class ActionsDolistorextract extends CommonHookActions
 	 *
 	 * @return int Positive number of sales if success, negative number of errors, or 0 if no email
 	 */
-	public function launchCronJob()
+	public function launchCronJob() : int
 	{
 		global $langs, $conf;
 
