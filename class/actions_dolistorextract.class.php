@@ -23,8 +23,7 @@
  */
 //require_once "dolistorextract.class.php";
 require_once DOL_DOCUMENT_ROOT . '/core/lib/files.lib.php';
-dol_include_once("/dolistorextract/include/ssilence/php-imap-client/autoload.php");
-
+require_once __DIR__ . "/../include/ssilence/php-imap-client/autoload.php";
 use SSilence\ImapClient\ImapClientException;
 use SSilence\ImapClient\ImapConnect;
 use SSilence\ImapClient\ImapClient as Imap;
@@ -70,7 +69,7 @@ class ActionsDolistorextract extends CommonHookActions
 	 * @param HookManager  $hookmanager Hook manager instance
 	 * @return int 0 if OK, -1 if error
 	 */
-	public function emailElementlist($parameters, &$object, &$action, $hookmanager)
+	public function emailElementlist($parameters, &$object, &$action, $hookmanager) : int
 	{
 		global $langs;
 
@@ -95,7 +94,7 @@ class ActionsDolistorextract extends CommonHookActions
 	 * @param dolistoreMail $dolistoreMail  Mail object with extracted customer fields
 	 * @return int                          Thirdparty rowid, or -1 if creation failed
 	 */
-	public function newCustomerFromDatas(User $user, dolistoreMail $dolistoreMail)
+	public function newCustomerFromDatas(User $user, dolistoreMail $dolistoreMail) : int
 	{
 		global $conf;
 
@@ -170,7 +169,7 @@ class ActionsDolistorextract extends CommonHookActions
 	 * @param int    $socid         Thirdparty/Customer rowid
 	 * @return int|false            New event rowid, 0 if already exists, -1 if error
 	 */
-	public function createEventFromExtractDatas($productDatas, $orderRef, $socid)
+	public function createEventFromExtractDatas(array $productDatas, string $orderRef, int $socid) : int|false
 	{
 		global $conf, $langs;
 
@@ -216,7 +215,7 @@ class ActionsDolistorextract extends CommonHookActions
 	 * @param string $noteString Tag/note to search (e.g., 'ORDER:...:...')
 	 * @return int|false Rowid if exists, false if not, -1 if error
 	 */
-	private function isAlreadyImported($noteString)
+	private function isAlreadyImported( string $noteString) : int|false
 	{
 		$sql = "SELECT id FROM " . $this->db->prefix() . "actioncomm WHERE note='" . $this->db->escape($noteString) . "'";
 
@@ -226,10 +225,10 @@ class ActionsDolistorextract extends CommonHookActions
 		if ($resql) {
 			if ($this->db->num_rows($resql)) {
 				$obj = $this->db->fetch_object($resql);
-				$return = $obj->id;
+				$result = $obj->id;
 			}
 			$this->db->free($resql);
-			return $return;
+			return $result;
 		} else {
 			$this->error = "Error " . $this->db->lasterror();
 			dol_syslog(__METHOD__ . " " . $this->error, LOG_ERR);
@@ -277,7 +276,7 @@ class ActionsDolistorextract extends CommonHookActions
 		// Filter only unread Dolistore emails
 		$dolistoreEmails = [];
 		foreach ($emails as $email) {
-			if (strpos($email->header->subject, 'DoliStore') > 0 && !$email->header->seen) {
+			if (strpos($email->header->subject, 'DoliStore') !== false && !$email->header->seen) {
 				$dolistoreEmails[] = $email;
 			}
 		}
@@ -394,7 +393,7 @@ class ActionsDolistorextract extends CommonHookActions
 	 * @param array $emails Array of Dolistore IMAP emails (SSilence\ImapClient\Message[])
 	 * @return array|int    Array of order_ref => success(bool) or int <0 if failure
 	 */
-	public function launchImportProcess($emails)
+	public function launchImportProcess( array $emails) : array|int
 	{
 
 		global $conf, $error;
@@ -414,10 +413,10 @@ class ActionsDolistorextract extends CommonHookActions
 			require_once(DOL_DOCUMENT_ROOT . '/categories/class/categorie.class.php');
 		}
 		if (!class_exists('dolistoreMailExtract')) {
-			dol_include_once('/dolistorextract/class/dolistoreMailExtract.class.php');
+			require_once __DIR__ . "/dolistoreMailExtract.class.php";
 		}
 		if (!class_exists('dolistoreMail')) {
-			dol_include_once('/dolistorextract/class/dolistoreMail.class.php');
+			require_once __DIR__ . "/dolistoreMail.class.php";
 		}
 
 		$user = new \User($this->db);
@@ -432,7 +431,7 @@ class ActionsDolistorextract extends CommonHookActions
 			foreach ($emails as $email) {
 
 				// Only mails from Dolistore and not seen
-				if (strpos($email->header->subject, 'DoliStore') > 0 && !$email->header->seen) {
+				if (strpos($email->header->subject, 'DoliStore') !== false && !$email->header->seen) {
 					$this->logOutput .= '<br/><strong>Processing email:</strong> ' . $email->header->subject;
 
 					// Data extraction
