@@ -129,6 +129,14 @@ class ActionsDolistorextract extends CommonHookActions
 		$socStatic->country_code = $dolistoreMail->buyer_country_code;
 		$socStatic->state = $dolistoreMail->buyer_state;
 		$socStatic->multicurrency_code = $dolistoreMail->order_currency;
+		if (!empty($dolistoreMail->buyer_idprof2)) {
+			$buyer_idprof2_clean = preg_replace('/\D/', '', $dolistoreMail->buyer_idprof2); // on enlève tout sauf chiffres si besoin
+			if (strlen($buyer_idprof2_clean) > 9) {
+				$socStatic->idprof1 = substr($buyer_idprof2_clean, 0, 9);
+			}
+		}
+		$socStatic->idprof2 = $dolistoreMail->buyer_idprof2;
+		$socStatic->tva_intra = $dolistoreMail->buyer_intravat;
 
 		// Le champ buyer_country_code contient BE/FR/DE...
 		$resql = $this->db->query('SELECT rowid as fk_country FROM ' . $this->db->prefix() . "c_country WHERE code = '" . $this->db->escape($dolistoreMail->buyer_country_code) . "'");
@@ -537,7 +545,7 @@ class ActionsDolistorextract extends CommonHookActions
 							if (!empty($queryResult)) {
 								$res = $this->db->fetch_object($queryResult);
 								$companySearch = $res->rowid;
-								$this->logOutput .= '<br/>-> <span class="warning">Multiple contacts found, fallback to company ID: <b>' . $companySearch . '</b></span>';
+								$this->logOutput .= '<br/>-> <span class="warning">Multiple contacts found, for company ID: <b>' . $companySearch . '</b></span>';
 
 							}
 						} else {
@@ -588,7 +596,7 @@ class ActionsDolistorextract extends CommonHookActions
 								$this->logOutput .= '<br/>-> <span class="ok">Contact created for existing company: <b>' . dol_escape_htmltag($contact->lastname) . ' ' . dol_escape_htmltag($contact->firstname) . '</b></span>';
 							}
 						} else {
-							$this->logOutput .= '<br/>-> <span class="ok">Contact already exists for this company</span>';
+							$this->logOutput .= '<br/>-> <span class="ok">Contact found for this company</span>';
 						}
 					} else {
 						// Customer not found => creation
@@ -671,11 +679,15 @@ class ActionsDolistorextract extends CommonHookActions
 
 							if ($emailFile->error) {
 								++$error;
+								$this->logOutput .= '<br/><span class="error">Erreur lors de la création de l\'email : ' . $emailFile->error . '</span>';
 								dol_syslog('Dolistorextract::mail:' . $emailFile->error, LOG_ERR);
 							} else {
 								$result = $emailFile->sendfile();
 								if ($result) {
 									++$emailsSent;
+									$this->logOutput .= '<br/><span class="ok">Email de remerciement envoyé à ' . dol_escape_htmltag($sendTo) . '</span>';
+								} else {
+									$this->logOutput .= '<br/><span class="error">Échec de l\'envoi du mail à ' . dol_escape_htmltag($sendTo) . '</span>';
 								}
 							}
 						}

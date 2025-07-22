@@ -1,6 +1,9 @@
 # Change log for DolistoreExtract
 
 ## Unreleased
+- NEW : Redesign of the DolistoreExtract module
+    + Removed the function that created a category for each module purchased by a third party
+    + Added a function to list each purchased module in the sales list - 1.6.0 - *22/07/2025* 
 
 ## Release 1.5
 - NEW : Compat V20 & V21 & Merge modification about mail structure - 1.5.0 - *25/02/2025*
