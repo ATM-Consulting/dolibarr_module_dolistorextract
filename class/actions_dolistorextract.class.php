@@ -548,8 +548,7 @@ class ActionsDolistorextract extends CommonHookActions
 								if ($obj && $obj->rowid > 0) {
 
 									$companySearch = (int)$obj->rowid;
-									$company->fetch($companySearch);
-									$this->logOutput .= '<br/>-> <span class="ok">Company found by SIRET: <b>' . dol_escape_htmltag($company->name) . '</b></span>';
+									$this->logOutput .= '<br/>-> <span class="ok">Company found by SIRET: <b>' . dol_escape_htmltag($companySearch) . '</b></span>';
 								}
 							}
 						}
