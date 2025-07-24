@@ -128,13 +128,23 @@ class ActionsDolistorextract extends CommonHookActions
 		$socStatic->country_code = $dolistoreMail->buyer_country_code;
 		$socStatic->state = $dolistoreMail->buyer_state;
 		$socStatic->multicurrency_code = $dolistoreMail->order_currency;
-		if (!empty($dolistoreMail->buyer_idprof2)) {
-			$buyer_idprof2_clean = preg_replace('/\D/', '', $dolistoreMail->buyer_idprof2); // on enlève tout sauf chiffres si besoin
-			if (strlen($buyer_idprof2_clean) > 9) {
+		$buyer_idprof2_clean = preg_replace('/\D/', '', $dolistoreMail->buyer_idprof2);
+		if ($dolistoreMail->buyer_country_code == 'FR' && !empty($buyer_idprof2_clean)) {
+			if (strlen($buyer_idprof2_clean) == 14) {
+				// SIRET
 				$socStatic->idprof1 = substr($buyer_idprof2_clean, 0, 9);
+				$socStatic->idprof2 = $buyer_idprof2_clean;
+			} elseif (strlen($buyer_idprof2_clean) == 9) {
+				// SIREN
+				$socStatic->idprof1 = $buyer_idprof2_clean;
+				$socStatic->idprof2 = ''; // pas de SIRET complet
+			} else {
+				// Format inattendu, tu peux logguer ou juste mettre ce qui arrive
+				$socStatic->idprof2 = $buyer_idprof2_clean;
 			}
+		} else {
+			$socStatic->idprof2 = $buyer_idprof2_clean ?: $dolistoreMail->buyer_idprof2;
 		}
-		$socStatic->idprof2 = $dolistoreMail->buyer_idprof2;
 		$socStatic->tva_intra = $dolistoreMail->buyer_intravat;
 
 		// Le champ buyer_country_code contient BE/FR/DE...
@@ -516,13 +526,32 @@ class ActionsDolistorextract extends CommonHookActions
 
 				// Search exactly by name
 				$fetchResult = $company->fetch(0, $orderDetails['buyer_data']['buyer_company']);
-
 				if ($fetchResult > 0) {
 					$companySearch = $company->id;
 				} else {
+					// Search exactly by email
 					$fetchResult = $company->fetch(0, '', '', '', '', '', '', '', '', '', $orderDetails['buyer_data']['buyer_email']);
 					if ($fetchResult > 0) {
 						$companySearch = $company->id;
+					} else {
+						// Search exactly by idprof2 / SIRET
+						if ($orderDetails['buyer_data']['buyer_country_code'] == 'FR' && !empty($orderDetails['buyer_data']['buyer_idprof2']) && is_numeric($orderDetails['buyer_data']['buyer_idprof2'])) {
+							if (strlen($orderDetails['buyer_data']['buyer_idprof2']) == 14) {
+								$sql = 'SELECT rowid FROM ' . $this->db->prefix() . 'societe WHERE siret = "' . $this->db->escape($orderDetails['buyer_data']['buyer_idprof2']) . '"';
+							} elseif (strlen($orderDetails['buyer_data']['buyer_idprof2']) == 9) {
+								$sql = 'SELECT rowid FROM ' . $this->db->prefix() . 'societe WHERE siren = "' . $this->db->escape($orderDetails['buyer_data']['buyer_idprof2']) . '"';
+							}
+							$resql = $this->db->query($sql);
+
+							if ($resql) {
+								$obj = $this->db->fetch_object($resql);
+								if ($obj && $obj->rowid > 0) {
+
+									$companySearch = (int)$obj->rowid;
+									$this->logOutput .= '<br/>-> <span class="ok">Company found by SIRET: <b>' . dol_escape_htmltag($companySearch) . '</b></span>';
+								}
+							}
+						}
 					}
 				}
 
