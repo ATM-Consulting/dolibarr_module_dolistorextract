@@ -124,7 +124,6 @@ class ActionsDolistorextract extends CommonHookActions
 		$socStatic->zip = $dolistoreMail->buyer_postal_code;
 		$socStatic->town = $dolistoreMail->buyer_city;
 		$socStatic->phone = $dolistoreMail->buyer_phone;
-		$socStatic->email = $dolistoreMail->buyer_email;
 		$socStatic->country_code = $dolistoreMail->buyer_country_code;
 		$socStatic->state = $dolistoreMail->buyer_state;
 		$socStatic->multicurrency_code = $dolistoreMail->order_currency;
@@ -471,13 +470,18 @@ class ActionsDolistorextract extends CommonHookActions
 							foreach ($data['items'] as $item) {
 								if (!empty($item['item_reference']) && !empty($item['item_name'])) {
 
+									$dateRaw = $email->header->date;
+									$dateSale = strtotime($dateRaw);
+
 									// Add the product to the order
 									$orderData[$orderRef]['items'][] = [
 										'item_reference' => $item['item_reference'],
 										'item_name' => $item['item_name'],
 										'item_price' => $item['item_price'],
 										'item_quantity' => $item['item_quantity'],
-										'item_price_total' => $item['item_price_total']
+										'item_price_total' => $item['item_price_total'],
+										'date_sale'        => $dateSale
+
 									];
 
 									$this->logOutput .= '<br/>-- <span class="ok">Product extracted: ' . $item['item_name'] . '</span>';
@@ -608,13 +612,10 @@ class ActionsDolistorextract extends CommonHookActions
 						// If no contact exists, create one
 						if ($resql && $this->db->num_rows($resql) == 0) {
 							$contact->socid = $companyId;
-							$contact->lastname = $orderDetails['buyer_data']['buyer_lastname'];
+							$contact->lastname = $contact->lastname = $dolistoreMail->buyer_lastname;
+
 							$contact->firstname = $orderDetails['buyer_data']['buyer_firstname'];
 							$contact->email = $orderDetails['buyer_data']['buyer_email'];
-							$contact->address = $orderDetails['buyer_data']['buyer_address1'];
-							$contact->zip = $orderDetails['buyer_data']['buyer_postal_code'];
-							$contact->town = $orderDetails['buyer_data']['buyer_city'];
-							$contact->country_code = $orderDetails['buyer_data']['buyer_country_code'];
 
 							$result = $contact->create($user);
 							if ($result < 0) {
@@ -782,11 +783,12 @@ class ActionsDolistorextract extends CommonHookActions
 			$webSales->fk_soc = $socid;
 			$webSales->import_key = date('Ymd');  // Generate import key with current date
 			$webSales->fk_webmodule = $fk_webmodule;
-			$webSales->date_sale = $TItemDatas['date_sale'] ?? dol_now();  // Current date for the sale
+			$webSales->date_sale = $TItemDatas['date_sale'];  // Current date for the sale
 			$webSales->status = !empty($TItemDatas['item_refunded']) ? WebModuleSales::STATUS_REFUNDED : Webmodulesales::STATUS_SOLD;
 
 			// Create the sale and check the result
 			$res = $webSales->create($user);
+
 			if ($res <= 0) {
 				// If creation fails, log the error and add it to the error array
 				$this->logError('Unable to create web sale: ' . $webSales->error . ' ' . implode(' - ', $webSales->errors));

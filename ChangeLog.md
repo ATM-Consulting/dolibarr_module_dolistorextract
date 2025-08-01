@@ -4,6 +4,9 @@
 
 
 ## Release 1.6
+- FIX : Feedback refacto of DolistoreExtract module
+    + Email is now only on the contact record
+    + Postal address is now only on the company record - 1.6.1 - *01/08/2025*
 - NEW : Redesign of the DolistoreExtract module
     + Removed the function that created a category for each module purchased by a third party
     + Added a function to list each purchased module in the sales list - 1.6.0 - *22/07/2025*
