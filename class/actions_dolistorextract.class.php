@@ -99,7 +99,7 @@ class ActionsDolistorextract extends CommonHookActions
 		global $conf;
 
 		$socStatic = new Societe($this->db);
-		var_dump($dolistoreMail);die;
+
 		if (empty($dolistoreMail->buyer_company) || empty($dolistoreMail->buyer_email)) {
 			// print "buyer_company or email not found !";
 			return -1;
