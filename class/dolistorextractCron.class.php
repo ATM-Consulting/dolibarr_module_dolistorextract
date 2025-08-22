@@ -44,7 +44,7 @@ class dolistorextractCron
 
 		$this->output.= '<p>'.$dolistorextractActions->logCat.'</p>';
 		if ($res < 0) {
-			$this->output.= 'erreur import dolistore!';
+			$this->output.= 'erreur import dolistore lié au métadonnées du mail!';
 
 			if(!empty($dolistorextractActions->error)){
 				$this->output.= '<br/>'.$dolistorextractActions->error;
