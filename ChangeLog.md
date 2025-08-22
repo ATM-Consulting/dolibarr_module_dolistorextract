@@ -4,6 +4,7 @@
 
 
 ## Release 1.6
+- FIX : Add more details on error message linked to import of orders - 1.6.2 - *22/08/2025* 
 - FIX : Feedback refacto of DolistoreExtract module
     + Email is now only on the contact record
     + Postal address is now only on the company record - 1.6.1 - *01/08/2025*
